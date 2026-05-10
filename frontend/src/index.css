@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
+
+* {
+    font-family: "Outfit", sans-serif;
+  }
+
+@theme{
+    /* --color-primary: #004798; */
+    --color-primary: #1E3A8A;
+    --color-secondary: #3B82F6;
+    --color-primary-dull: #1E3A8A;
+    --color-primary-dulla: #44ae7c;
+    --color-ruler: #E5E4E2;
+    --color-themegray: #3D3D3D;
+    --color-themered-dull: #E62020;
+    --color-themered: #FD5C63;
+    --color-themeyellow-dull: #FFA000;
+    --color-themeyellow: #FFCA28;
+}
+
+/* 
+   * selects all HTML elements.
+*/
+
+/* ── Dual Range Slider ──────────────────────────────── */
+.range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+  background: transparent;
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  outline: none;
+}
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: all;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid #2563eb;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.range-thumb::-moz-range-thumb {
+  pointer-events: all;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid #2563eb;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}

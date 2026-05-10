@@ -1,0 +1,202 @@
+# ============================================================
+#  real-estate-app — root .gitignore
+#  Covers: Vite-React (frontend) + Node/Express/MongoDB (backend)
+# ============================================================
+
+
+# ───────────────────────────────────────────────
+# 🔐 ENVIRONMENT & SECRETS  (never commit these)
+# ───────────────────────────────────────────────
+.env
+.env.*
+!.env.example          # allow a safe template to be committed
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+
+# ───────────────────────────────────────────────
+# 📦 NODE MODULES
+# ───────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# ───────────────────────────────────────────────
+# 🏗️  BUILD OUTPUTS
+# ───────────────────────────────────────────────
+# Vite / React build
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/build/
+
+# Backend compiled output (if you add TypeScript later)
+backend/dist/
+backend/build/
+
+# ───────────────────────────────────────────────
+# 🗄️  DATABASE
+# ───────────────────────────────────────────────
+# Local MongoDB data directory
+data/
+mongo-data/
+*.db
+*.sqlite
+*.sqlite3
+
+# MongoDB dump files
+dump/
+mongodump/
+
+# ───────────────────────────────────────────────
+# 📋 LOGS
+# ───────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+combined.log
+error.log
+
+# ───────────────────────────────────────────────
+# 🔑 KEYS & CERTIFICATES
+# ───────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+*.jks
+*.keystore
+serviceAccountKey.json   # Firebase / GCP service accounts
+
+# ───────────────────────────────────────────────
+# 🧪 TESTING & COVERAGE
+# ───────────────────────────────────────────────
+coverage/
+frontend/coverage/
+backend/coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+
+# ───────────────────────────────────────────────
+# ⚡ VITE / REACT SPECIFIC
+# ───────────────────────────────────────────────
+frontend/.cache/
+frontend/storybook-static/
+
+# ───────────────────────────────────────────────
+# 🖥️  OS FILES
+# ───────────────────────────────────────────────
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encdata
+Desktop.ini
+$RECYCLE.BIN/
+ehthumbs.db
+
+# Linux
+*~
+
+# ───────────────────────────────────────────────
+# 🛠️  EDITOR & IDE
+# ───────────────────────────────────────────────
+# VSCode
+.vscode/
+!.vscode/extensions.json   # allow recommended extensions list
+!.vscode/settings.json     # allow shared workspace settings
+
+# JetBrains (WebStorm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Neovim
+*.swp
+*.swo
+*.swn
+Session.vim
+.netrwhist
+
+# Sublime Text
+*.sublime-workspace
+
+# Emacs
+*#
+.#*
+
+# ───────────────────────────────────────────────
+# 📦 PACKAGE MANAGER ARTIFACTS
+# ───────────────────────────────────────────────
+.npm/
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+.pnpm-store/
+
+# Lock files — keep ONE that matches your package manager.
+# Uncomment the ones you DON'T use to ignore them.
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ───────────────────────────────────────────────
+# ☁️  CLOUD & DEPLOYMENT
+# ───────────────────────────────────────────────
+# Vercel
+.vercel/
+
+# Netlify
+.netlify/
+
+# AWS / Serverless
+.serverless/
+.aws/
+
+# Docker override files (keep Dockerfile, ignore local overrides)
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Terraform state (if used)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# ───────────────────────────────────────────────
+# 🗂️  MISC
+# ───────────────────────────────────────────────
+*.tgz
+*.zip
+*.tar.gz
+.cache/
+tmp/
+temp/
+.tmp/
+.temp/
+uploads/           # user-uploaded files stored locally
+public/uploads/    # same — serve from cloud storage, not git

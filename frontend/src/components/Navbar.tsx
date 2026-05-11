@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoHeartOutline } from "react-icons/io5";
-import { TbGridDots } from "react-icons/tb";
+// import { TbGridDots } from "react-icons/tb";
+import { RiMenu3Fill } from "react-icons/ri";
 import { Link, NavLink } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
@@ -13,7 +14,7 @@ import {
   FiStar,
   FiUser,
 } from "react-icons/fi";
-import { MdEmail, MdMenu } from "react-icons/md";
+import { MdClose, MdEmail, MdOutlineFeaturedPlayList } from "react-icons/md";
 import { FaPhoneAlt } from "react-icons/fa";
 import { BsClockFill } from "react-icons/bs";
 
@@ -183,8 +184,8 @@ const Navbar = () => {
 
           {/* hamburger (always shown alongside the profile on smaller screens) */}
           <button onClick={() => setIsOpen(true)} aria-label="Menu">
-            {/* <TbGridDots className="text-2xl" /> */}
-            <MdMenu className="text-4xl" />
+            {/* <MdMenu className="text-4xl" /> */}
+            <RiMenu3Fill className="text-3xl" />
           </button>
         </div>
 
@@ -204,10 +205,13 @@ const Navbar = () => {
           }`}
         >
           {/* Header */}
-          <div className="p-6 border-b">
+          <div className="flex justify-between p-6 border-b">
             <h2 className="text-xl">
               {user ? (userProfile?.name ?? "My Account") : "Welcome"}
             </h2>
+            <button onClick={()=> setIsOpen(false)}>
+              <MdClose className="text-2xl"/>
+            </button>
           </div>
 
           {/* Menu Items */}
@@ -230,7 +234,8 @@ const Navbar = () => {
                   className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 cursor-pointer transition"
                 >
                   <span className="text-lg">
-                    <FiPlusCircle />
+                    {/* <FiPlusCircle /> */}
+                    <MdOutlineFeaturedPlayList />
                   </span>
                   <span className="font-medium">My Properties</span>
                 </NavLink>
@@ -309,7 +314,7 @@ const Navbar = () => {
             )}
 
             {!user && (
-              <ul className="space-y-4">
+              <ul className="space-y-4 ">
                 <NavLink
                   to="/"
                   onClick={() => setIsOpen(false)}
@@ -361,7 +366,7 @@ const Navbar = () => {
                   <span className="font-medium">Feedback</span>
                 </NavLink>
                 <button
-                  className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary transition text-white rounded-full"
+                  className="w-full cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary transition text-white rounded-full"
                   onClick={() => {
                     setIsOpen(false);
                     setShowUserLogin(true);

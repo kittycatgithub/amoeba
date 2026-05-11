@@ -16,12 +16,12 @@ import { LiaHomeSolid } from "react-icons/lia";
 const AmenitiesSection = lazy(() => import("../components/AmenitiesSection"));
 
 // House rules data
-const houseRules = [
-  { icon: "🚭", rule: "No smoking", detail: "Smoking not allowed indoors" },
-  { icon: "🐾", rule: "Pets allowed", detail: "Pets are welcome with approval" },
-  { icon: "🎵", rule: "No noise after 11 PM", detail: "Keep noise levels low after 11 PM" },
-  { icon: "🧴", rule: "Keep property clean", detail: "Return property in same condition" },
-];
+// const houseRules = [
+//   { icon: "🚭", rule: "No smoking", detail: "Smoking not allowed indoors" },
+//   { icon: "🐾", rule: "Pets allowed", detail: "Pets are welcome with approval" },
+//   { icon: "🎵", rule: "No noise after 11 PM", detail: "Keep noise levels low after 11 PM" },
+//   { icon: "🧴", rule: "Keep property clean", detail: "Return property in same condition" },
+// ];
 
 
 const PropertyDetails: React.FC = () => {

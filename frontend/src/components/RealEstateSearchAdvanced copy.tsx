@@ -378,7 +378,8 @@ export default function RealEstateSearchAdvanced() {
               />
               {openDD === "type" && (
                 <div className="absolute z-50 top-full left-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-xl py-2">
-                  {PROPERTY_TYPES.map(({ label, icon: Icon, value }) => (
+                  {/* {PROPERTY_TYPES.map(({ label, icon: Icon, value }) => ( */}
+                  {PROPERTY_TYPES.map(({ label, value }) => (
                     <CheckRow
                       key={value}
                       label={label}

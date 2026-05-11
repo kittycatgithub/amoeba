@@ -1,5 +1,3 @@
-import React from "react";
-
 const refundSteps = [
   { step: "01", title: "Submit Request", desc: "Contact our support team with your order ID and reason for refund within the eligible window." },
   { step: "02", title: "Verification", desc: "Our team reviews your request and verifies eligibility based on service status and policy criteria." },

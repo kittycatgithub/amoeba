@@ -47,8 +47,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const user = useAppSelector(state => state.user.isLoggedIn);
     const userProfile = useAppSelector(state => state.user.profile);
 
-    const admin = useAppSelector(state => state.admin.isAdminLoggedIn);
-    const adminProfile = useAppSelector(state => state.admin.profile)
+    // const admin = useAppSelector(state => state.admin.isAdminLoggedIn);
+    // const adminProfile = useAppSelector(state => state.admin.profile)
 
     // Wishlist & shortlist are now managed in Redux (single source of truth).
     const wishlisted = useAppSelector(state => state.wishlist.ids);

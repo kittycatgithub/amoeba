@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { NavLink } from "react-router-dom";
 
 const HeaderCarousel = () => {
   const [current, setCurrent] = useState(0);
@@ -76,19 +77,17 @@ const HeaderCarousel = () => {
               <p className="text-base sm:text-lg md:text-xl mb-8 leading-relaxed">
                 {slide.desc}
               </p>
-              <div className="flex justify-center gap-4">
-                <a
-                  href="/contact"
+              <div className="flex justify-center gap-4">                
+                <NavLink to="/property-search" onClick={()=> scrollTo(0,0)}
+                  className="bg-themeyellow hover:bg-themeyellow-dull animate-pulse text-black font-semibold py-3 px-8 rounded-full transition-transform transform hover:scale-105"
+                >
+                  Explore Properties
+                </NavLink>
+                <NavLink to="/contact" onClick={()=> scrollTo(0,0)}
                   className="bg-primary hover:bg-primary-dull animate-pulse text-white font-semibold py-3 px-8 rounded-full transition-transform transform hover:scale-105"
                 >
                   Contact Us
-                </a>
-                <a
-                  href="/about"
-                  className="bg-themeyellow hover:bg-themeyellow-dull animate-pulse text-white font-semibold py-3 px-8 rounded-full transition-transform transform hover:scale-105"
-                >
-                  Read More
-                </a>
+                </NavLink>
               </div>
             </div>
           </div>

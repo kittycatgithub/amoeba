@@ -1,6 +1,3 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
-
 const MyProperties = () => {
   return (
     <div className='mt-16 pb-16 max-w-7xl mx-auto'>

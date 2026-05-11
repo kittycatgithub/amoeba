@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SocialLink {
@@ -73,93 +71,93 @@ const POSTER_DATA: PosterInfo = {
 
 // ─── Helper: Render star rating ───────────────────────────────────────────────
 
-function StarRating({ rating, total }: { rating: number; total: number }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <svg
-            key={star}
-            className="w-3.5 h-3.5"
-            viewBox="0 0 14 14"
-            fill={star <= Math.round(rating) ? "#F59E0B" : "#D1D5DB"}
-          >
-            <polygon points="7,1 8.8,5.2 13.4,5.6 10,8.6 11.1,13.1 7,10.6 2.9,13.1 4,8.6 0.6,5.6 5.2,5.2" />
-          </svg>
-        ))}
-      </div>
-      <span className="text-sm text-gray-500 dark:text-gray-400">
-        {rating} · {total} reviews
-      </span>
-    </div>
-  );
-}
+// function StarRating({ rating, total }: { rating: number; total: number }) {
+//   return (
+//     <div className="flex items-center gap-1.5">
+//       <div className="flex items-center gap-0.5">
+//         {[1, 2, 3, 4, 5].map((star) => (
+//           <svg
+//             key={star}
+//             className="w-3.5 h-3.5"
+//             viewBox="0 0 14 14"
+//             fill={star <= Math.round(rating) ? "#F59E0B" : "#D1D5DB"}
+//           >
+//             <polygon points="7,1 8.8,5.2 13.4,5.6 10,8.6 11.1,13.1 7,10.6 2.9,13.1 4,8.6 0.6,5.6 5.2,5.2" />
+//           </svg>
+//         ))}
+//       </div>
+//       <span className="text-sm text-gray-500 dark:text-gray-400">
+//         {rating} · {total} reviews
+//       </span>
+//     </div>
+//   );
+// }
 
 // ─── Helper: Stat card ────────────────────────────────────────────────────────
 
-function StatCard({
-  value,
-  label,
-}: {
-  value: string | number;
-  label: string;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl py-4 px-2 text-center">
-      <span className="text-2xl font-semibold text-gray-900 dark:text-white">
-        {value}
-      </span>
-      <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-        {label}
-      </span>
-    </div>
-  );
-}
+// function StatCard({
+//   value,
+//   label,
+// }: {
+//   value: string | number;
+//   label: string;
+// }) {
+//   return (
+//     <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl py-4 px-2 text-center">
+//       <span className="text-2xl font-semibold text-gray-900 dark:text-white">
+//         {value}
+//       </span>
+//       <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+//         {label}
+//       </span>
+//     </div>
+//   );
+// }
 
 // ─── Helper: Detail row ───────────────────────────────────────────────────────
 
-function DetailRow({
-  icon,
-  label,
-  value,
-  isLink,
-  href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  isLink?: boolean;
-  href?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      {/* Icon box */}
-      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center mt-0.5">
-        {icon}
-      </div>
+// function DetailRow({
+//   icon,
+//   label,
+//   value,
+//   isLink,
+//   href,
+// }: {
+//   icon: React.ReactNode;
+//   label: string;
+//   value: string;
+//   isLink?: boolean;
+//   href?: string;
+// }) {
+//   return (
+//     <div className="flex items-start gap-3">
+//       {/* Icon box */}
+//       <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center mt-0.5">
+//         {icon}
+//       </div>
 
-      <div className="min-w-0">
-        <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
-          {label}
-        </p>
-        {isLink && href ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline break-all"
-          >
-            {value}
-          </a>
-        ) : (
-          <p className="text-sm font-medium text-gray-900 dark:text-white break-all">
-            {value}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
+//       <div className="min-w-0">
+//         <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
+//           {label}
+//         </p>
+//         {isLink && href ? (
+//           <a
+//             href={href}
+//             target="_blank"
+//             rel="noopener noreferrer"
+//             className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline break-all"
+//           >
+//             {value}
+//           </a>
+//         ) : (
+//           <p className="text-sm font-medium text-gray-900 dark:text-white break-all">
+//             {value}
+//           </p>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -173,14 +171,14 @@ export default function PropertyPosterInfo({ owner }: { owner?: Owner }) {
     avatar: owner?.avatar ?? POSTER_DATA.avatar,
   };
 
-  const [avatarError, setAvatarError] = useState(false);
+  // const [avatarError, setAvatarError] = useState(false);
 
   // Initials fallback when avatar fails to load
-  const initials = poster.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
+  // const initials = poster.name
+  //   .split(" ")
+  //   .map((n) => n[0])
+  //   .join("")
+  //   .toUpperCase();
 
   return (
     <section className="border-t border-gray-200 dark:border-gray-700 pt-8 bg-white pb-16">

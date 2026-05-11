@@ -124,6 +124,7 @@ const PropertyCard = ({ property }: Props) => {
     <div
       className="bg-white flex flex-col justify-between rounded-xl shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer"
       onClick={() => navigate(`/property-details/${_id}`)}
+      title={title}
     >
       <div>
  {/* SLIDER */}
@@ -163,7 +164,7 @@ const PropertyCard = ({ property }: Props) => {
       <div className="p-4">
         <div className="flex flex-row justify-between items-start">
         <h3 className="font-semibold text-lg">{title}</h3>
-        <button onClick={(e) => { e.stopPropagation(); toggleWishlist(_id); }} className="relative cursor-pointer">
+        <button title="Wishlist Property" onClick={(e) => { e.stopPropagation(); toggleWishlist(_id); }} className="relative cursor-pointer">
           {isWishlisted
             ? <IoHeart className="text-2xl text-themered-dull" />
             : <IoHeartOutline className="text-2xl text-themered-dull" />

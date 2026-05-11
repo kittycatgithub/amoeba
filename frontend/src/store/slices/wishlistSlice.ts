@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 /**
  * Wishlist slice – stores property IDs the user has hearted.
@@ -16,6 +16,8 @@ const initialState: WishlistState = {
   loading: false,
   error: null,
 };
+
+const addToWishlist = createAsyncThunk('')
 
 const wishlistSlice = createSlice({
   name: 'wishlist',
@@ -48,3 +50,19 @@ export const {
 } = wishlistSlice.actions;
 
 export default wishlistSlice.reducer;
+
+
+// Notes
+/*
+
+ Standard DB Schema first
+ Wishlist document (MongoDB)
+{
+  _id: ObjectId,
+  user:     ObjectId,   // ref: 'User'
+  property: ObjectId,   // ref: 'Property'
+  createdAt: Date,
+}
+Compound unique index:  { user: 1, property: 1 }
+
+*/

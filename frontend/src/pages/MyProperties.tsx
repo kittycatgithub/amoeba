@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { getMyPropertiesApi, deletePropertyApi } from '../api/propertyApi';
+import { getMyPropertiesApi } from '../api/propertyApi';
 import { toast } from 'react-hot-toast';
 
 const currency = "₹";
 
 
 // Kept for API compatibility
-const saleProducts: any[] = [];
+// const saleProducts: any[] = [];
 
 // ─── Edit Button ──────────────────────────────────────────────────────────────
 
@@ -27,7 +27,8 @@ const EditPropertyButton = ({ orderId }: { orderId: string }) => (
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const MyProperties = () => {
-  const { user, userProfile } = useAppContext();
+  // const { user, userProfile } = useAppContext();
+  const { user } = useAppContext();
   const navigate = useNavigate();
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,18 +56,18 @@ const MyProperties = () => {
   }, [user, navigate]);
 
   // Delete property handler
-  const handleDeleteProperty = async (propertyId: string) => {
-    if (window.confirm('Are you sure you want to delete this property?')) {
-      try {
-        await deletePropertyApi(propertyId);
-        setProperties(prev => prev.filter(p => p._id !== propertyId));
-        toast.success('Property deleted successfully');
-      } catch (error) {
-        console.error('Failed to delete property:', error);
-        toast.error('Failed to delete property');
-      }
-    }
-  };
+  // const handleDeleteProperty = async (propertyId: string) => {
+  //   if (window.confirm('Are you sure you want to delete this property?')) {
+  //     try {
+  //       await deletePropertyApi(propertyId);
+  //       setProperties(prev => prev.filter(p => p._id !== propertyId));
+  //       toast.success('Property deleted successfully');
+  //     } catch (error) {
+  //       console.error('Failed to delete property:', error);
+  //       toast.error('Failed to delete property');
+  //     }
+  //   }
+  // };
 
   // Show loading state
   if (loading) {

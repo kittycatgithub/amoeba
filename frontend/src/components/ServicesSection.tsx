@@ -32,37 +32,37 @@ const services = [
   },
 ];
 
-function ArrowConnector() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        width: "40px",
-      }}
-    >
-      <svg width="36" height="20" viewBox="0 0 36 20" fill="none">
-        <path
-          d="M2 10 Q18 3 34 10"
-          stroke="#22c55e"
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M29 7L34 10L29 13"
-          stroke="#22c55e"
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  );
-}
+// function ArrowConnector() {
+//   return (
+//     <div
+//       style={{
+//         display: "flex",
+//         alignItems: "center",
+//         justifyContent: "center",
+//         flexShrink: 0,
+//         width: "40px",
+//       }}
+//     >
+//       <svg width="36" height="20" viewBox="0 0 36 20" fill="none">
+//         <path
+//           d="M2 10 Q18 3 34 10"
+//           stroke="#22c55e"
+//           strokeWidth="2"
+//           fill="none"
+//           strokeLinecap="round"
+//         />
+//         <path
+//           d="M29 7L34 10L29 13"
+//           stroke="#22c55e"
+//           strokeWidth="2"
+//           fill="none"
+//           strokeLinecap="round"
+//           strokeLinejoin="round"
+//         />
+//       </svg>
+//     </div>
+//   );
+// }
 
 export default function ServicesSection() {
   const [visible, setVisible] = useState(false);

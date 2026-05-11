@@ -14,17 +14,17 @@ interface AmenityCategory {
 
 const AmenitiesSection = memo(({ selectedAmenities }: { selectedAmenities?: string[] }) => {
   // Map property amenity strings to the icon-based display items
-  const amenityIconMap: Record<string, any> = {
-    'Wifi': FaWifi, 'Swimming Pool': FaSwimmingPool, 'Parking': FaParking,
-    'AC Room': FaSnowflake, 'Pet Friendly': FaDog,
-  };
+  // const amenityIconMap: Record<string, any> = {
+  //   'Wifi': FaWifi, 'Swimming Pool': FaSwimmingPool, 'Parking': FaParking,
+  //   'AC Room': FaSnowflake, 'Pet Friendly': FaDog,
+  // };
 
   // If specific amenities are passed, display them as flat chips
   if (selectedAmenities && selectedAmenities.length > 0) {
     return (
       <div className="flex flex-wrap gap-2">
         {selectedAmenities.map(amenity => {
-          const Icon = amenityIconMap[amenity];
+          // const Icon = amenityIconMap[amenity];
           return (
             <div key={amenity} className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full text-sm text-black">
               {/* {Icon && <Icon size={13} />} */}

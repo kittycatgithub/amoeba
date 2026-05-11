@@ -159,7 +159,8 @@ const EditProperty = () => {
         console.log(prop, 'prop')
 
         // Parse price
-        const { value: priceValue, unit: priceUnit } = parsePriceValue(prop.price)
+        // const { value: priceValue, unit: priceUnit } = parsePriceValue(prop.price)
+        const { unit: priceUnit } = parsePriceValue(prop.price)
 
         // Parse area
         const areaValue = parseAreaValue(prop.area)

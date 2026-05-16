@@ -1,28 +1,21 @@
 import axios from 'axios';
 
-// const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const API_BASE = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,   // ← sends cookies on every request automatically
 });
 
-// Attach JWT token to every request if present
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// No request interceptor needed — cookie is sent automatically by the browser
 
-// Handle 401 — clear token and redirect to login
+// Handle 401 — redirect to login (no token to clear)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      window.location.href = '/login';   // optional: redirect on session expiry
     }
     return Promise.reject(error);
   }

@@ -4,6 +4,15 @@ const Otp = require('../models/Otp');
 const { sendEmail, generateOTP } = require('../utils/sendEmail');
 const { validationResult } = require('express-validator');
 
+const sendTokenCookie = (res, token) => {
+  res.cookie('token', token, {
+    httpOnly: true,                                      // JS can't read it — XSS safe
+    secure: process.env.NODE_ENV === 'production',       // HTTPS only in prod
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // cross-site in prod
+    maxAge: 7 * 24 * 60 * 60 * 1000,                   // 7 days in ms
+  });
+};
+
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
 
@@ -91,10 +100,11 @@ exports.verifyOtpAndRegister = async (req, res) => {
     await Otp.deleteMany({ email: email.toLowerCase(), type: 'registration' });
 
     const token = signToken(user._id);
+    sendTokenCookie(res, token);               // ← set cookie
 
     res.status(201).json({
       message: 'Registration successful',
-      token,
+      // token,
       user: {
         id: user._id,
         name: user.name,
@@ -126,10 +136,11 @@ exports.login = async (req, res) => {
     if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
 
     const token = signToken(user._id);
+    sendTokenCookie(res, token);               // ← set cookie
 
     res.json({
       message: 'Login successful',
-      token,
+      // token,
       user: {
         id: user._id,
         name: user.name,
@@ -148,6 +159,11 @@ exports.login = async (req, res) => {
 
 // ─── Logout (client-side token removal) ─────────────────────
 exports.logout = async (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
   res.json({ message: 'Logged out successfully' });
 };
 

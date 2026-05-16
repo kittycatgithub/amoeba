@@ -13,19 +13,17 @@ export interface UserProfile {
 interface UserState {
   isLoggedIn: boolean;
   profile: UserProfile | null;
-  token: string | null;
   loading: boolean;
   error: string | null;
 }
 
-// Rehydrate from localStorage on load
-const storedToken = localStorage.getItem('token');
+// Rehydrate profile from localStorage on load
+// Token is now an HTTP-only cookie — browser handles it automatically
 const storedProfile = localStorage.getItem('userProfile');
 
 const initialState: UserState = {
-  isLoggedIn: !!storedToken,
+  isLoggedIn: !!storedProfile,   // logged in if we have a cached profile
   profile: storedProfile ? JSON.parse(storedProfile) : null,
-  token: storedToken,
   loading: false,
   error: null,
 };
@@ -34,20 +32,17 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    loginSuccess: (state, action: PayloadAction<{ profile: UserProfile; token: string }>) => {
+    loginSuccess: (state, action: PayloadAction<{ profile: UserProfile }>) => {
       state.isLoggedIn = true;
       state.profile = action.payload.profile;
-      state.token = action.payload.token;
       state.error = null;
-      localStorage.setItem('token', action.payload.token);
       localStorage.setItem('userProfile', JSON.stringify(action.payload.profile));
     },
     logout: (state) => {
       state.isLoggedIn = false;
       state.profile = null;
-      state.token = null;
-      localStorage.removeItem('token');
       localStorage.removeItem('userProfile');
+      // Cookie is cleared server-side via res.clearCookie() — nothing to do here
     },
     updateProfile: (state, action: PayloadAction<Partial<UserProfile>>) => {
       if (state.profile) {

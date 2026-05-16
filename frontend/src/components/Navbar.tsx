@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoHeartOutline } from "react-icons/io5";
-// import { TbGridDots } from "react-icons/tb";
 import { RiMenu3Fill } from "react-icons/ri";
 import { Link, NavLink } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
@@ -17,10 +16,13 @@ import {
 import { MdClose, MdEmail, MdOutlineFeaturedPlayList } from "react-icons/md";
 import { FaPhoneAlt } from "react-icons/fa";
 import { BsClockFill } from "react-icons/bs";
+import { useAppSelector } from "../store/hooks";
 
 const Navbar = () => {
-  const { user, userProfile, logout, setShowUserLogin, navigate, wishlisted } = useAppContext();
+  const { user, userProfile, logout, setShowUserLogin, navigate } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
+
+  const wishlisted = useAppSelector(state => state.wishlist.ids ?? []); // ✅ direct from slice
 
   const drawerRef = useRef<HTMLDivElement>(null);
 

@@ -4,13 +4,14 @@ import PropertyCard from "../components/PropertyCard";
 import { BsFilterRight } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 import { FaSearch, FaMapMarkerAlt } from "react-icons/fa";
-import { useAppContext } from "../context/AppContext";
 import { useAppSelector } from "../store/hooks";
 import { resetFilters, setSearchQuery, setCity } from "../store/slices/filterSlice";
 import { useAppDispatch } from "../store/hooks";
 
 const SearchPage = () => {
-  const { properties } = useAppContext();
+  // Fetching properties from Redux slice instead of AppContext
+  const properties = useAppSelector(state => state.property.properties ?? []);
+  console.log(properties, 'properties')
   const filters = useAppSelector(state => state.filters);
   const dispatch = useAppDispatch();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

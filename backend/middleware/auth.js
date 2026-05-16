@@ -1,15 +1,15 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// Verify JWT token and attach user to request
+// Verify JWT token from HTTP-only cookie and attach user to request
 const auth = async (req, res, next) => {
   try {
-    const header = req.headers.authorization;
-    if (!header || !header.startsWith('Bearer ')) {
+    const token = req.cookies?.token;
+
+    if (!token) {
       return res.status(401).json({ message: 'No token provided, authorization denied' });
     }
 
-    const token = header.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
 
@@ -24,12 +24,11 @@ const auth = async (req, res, next) => {
   }
 };
 
-// Optional auth — attaches user if token present, but doesn't block
+// Optional auth — attaches user if cookie token present, but doesn't block
 const optionalAuth = async (req, res, next) => {
   try {
-    const header = req.headers.authorization;
-    if (header && header.startsWith('Bearer ')) {
-      const token = header.split(' ')[1];
+    const token = req.cookies?.token;
+    if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.id).select('-password');
     }
@@ -39,7 +38,7 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-// Role-based access control
+// Role-based access control (unchanged)
 const requireRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {

@@ -38,6 +38,7 @@ export const addToWishlist = createAsyncThunk(
 export const removeFromWishlist = createAsyncThunk(
   'wishlist/remove',
   async (propertyId: string, { rejectWithValue }) => {
+    
     try {
       await api.delete(`${import.meta.env.VITE_API_URL}/api/users/wishlist/${propertyId}`);
       toast.success('Property removed from wishlist')

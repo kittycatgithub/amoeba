@@ -73,7 +73,7 @@ const PropertyCard = ({ property }: Props) => {
   return (
     <div
       className="bg-white flex flex-col justify-between rounded-xl shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer"
-      onClick={() => navigate(`/property-details/${_id}`)}
+      onClick={() => {navigate(`/property-details/${_id}`); scrollTo(0,0)}}
       title={title}
     >
       <div>
@@ -117,8 +117,9 @@ const PropertyCard = ({ property }: Props) => {
           <p className="font-bold mt-2">{currency}{price} • {area}</p>
         </div>
       </div>
-
-      <button className="mt-3 w-full bg-primary text-white py-2 rounded-b-lg">
+      
+      {/* <button className="mt-3 w-full bg-primary text-white py-2 rounded-b-lg"> */}
+      <button className="mt-3 w-full border-2 border-primary text-primary py-2 rounded-b-xl ">
         View Property
       </button>
     </div>

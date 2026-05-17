@@ -76,6 +76,11 @@ const Wishlist = () => {
           ))}
         </div>
       )}
+      <div className="flex justify-center mt-6">
+        <button onClick={()=> {navigate('/property-search'); scrollTo(0,0)}} className="mx-auto cursor-pointer px-12 my-6 py-2.5 border text-primary hover:bg-primary/10 transition rounded-lg">
+              See More
+        </button>
+      </div>
     </div>
   );
 };

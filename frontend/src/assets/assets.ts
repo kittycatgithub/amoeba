@@ -441,3 +441,32 @@ export const dummyProperties: Property[] = [
     availability: 'Within 1 Year',
   },
 ];
+
+export const footerLinks = [
+  {
+    title: "Quick Links",
+    links: [
+      { text: "Home", url: "/" },
+      { text: "Pricing", url: "/pricing" },
+    ],
+  },
+
+  {
+    title: "Properties",
+    links: [
+      { text: "Explore Properties", url: "/property-search" },
+      { text: "Post Property", url: "/add-property" },
+      { text: "My Properties", url: "/my-properties" },
+    ],
+  },
+
+  {
+    title: "Support",
+    links: [
+      { text: "Terms & Conditions", url: "/terms-conditions" },
+      { text: "Privacy Policy", url: "/privacy-policy" },
+      { text: "Refund Policy", url: "/refund-policy" },
+      { text: "Contact Us", url: "/contact" },
+    ],
+  },
+];

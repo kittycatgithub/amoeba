@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { useAppContext } from "../context/AppContext"
+// import { footerLinks } from "../assets/assets"
 
 const Footer = () => {
     const { userProfile } = useAppContext()
@@ -14,7 +15,7 @@ const Footer = () => {
                     <a href="/"
                         className="flex justify-center sm:justify-start border-b border-gray-200 mb-5 pb-4">
                         {/* <img src="/website/pulsarproperties.png" /> */}
-                        <img src="/website/mainlogo.png" />
+                        <img src="/website/mainlogo.png" alt="logo" />
                     </a>
                     {/* <div className="flex max-xl:items-center max-xl:justify-between flex-col sm:flex-row xl:flex-col">
                         <p className="mb-5 text-center lg:text-left">Download our app now</p>
@@ -157,7 +158,7 @@ const Footer = () => {
             {/* Grid */}
             <div className="py-3 border-t border-gray-200">
                 <div className="flex items-center justify-center flex-col sm:justify-between sm:flex-row">
-                    <span className="text-sm">©PulsarProperties 2026, All rights reserved.</span>
+                    <span className="text-sm">©PulsarProperties { new Date().getFullYear() }, All rights reserved.</span>
                     <span className="text-sm mt-3 md::mt-0"><a href="https://www.instagram.com/hostcloudrcs/" target="_blank">Designed & Developed By HostCloudRCS</a></span>
                     <div className="flex mt-3 md::mt-0 space-x-4 sm:justify-center">
                         {/* <a href="javascript:;"
@@ -171,10 +172,8 @@ const Footer = () => {
                                         fill="currentColor" />
                                 </g>
                             </svg>
-
-
                         </a> */}
-                        <a href="https://www.instagram.com/26sheltersofficial/" target="_blank"
+                        <a href="https://www.instagram.com/pulsarproperties/" target="_blank"
                             className="group w-9 h-9 transition-all duration-500 rounded-full border border-gray-300 flex justify-center items-center hover:border-indigo-600">
                             <svg className="w-[1.25rem] h-[1.125rem] transition-all duration-500 group-hover:text-indigo-400"
                                 viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -193,8 +192,8 @@ const Footer = () => {
                                     fill="currentColor"></path>
                             </svg>
 
-                        </a>
-                        <a href="javascript:;"
+                        </a> */}
+                        {/* <a href="javascript:;"
                             className="group w-9 h-9 transition-all duration-500 rounded-full border border-gray-300 flex justify-center items-center hover:border-indigo-600">
                             <svg className="w-[1.25rem] h-[0.875rem] transition-all duration-500 group-hover:text-indigo-400"
                                 viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">

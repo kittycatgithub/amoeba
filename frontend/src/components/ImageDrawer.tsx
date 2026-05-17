@@ -112,7 +112,8 @@ const ImageDrawer = memo<ImageDrawerProps>(({ isOpen, images, onClose }) => {
                   className="group relative aspect-square rounded-lg overflow-hidden bg-gray-200 hover:shadow-lg transition-shadow"
                 >
                   <img
-                    src={image.url}
+                    // src={image.url}
+                    src={`${import.meta.env.VITE_API_URL}${image.url}`}
                     alt={`${selectedCategory}-image`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"

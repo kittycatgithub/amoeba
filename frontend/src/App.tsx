@@ -21,6 +21,7 @@ import MyProperties from "./pages/MyProperties"
 import TermsAndConditions from "./pages/TermsAndConditions"
 import PrivacyPolicy from "./pages/PrivacyPolicy"
 import RefundPolicy from "./pages/RefundPolicy"
+import MySubscriptions from "./pages/MySubscriptions"
 
 const App = () => {
 
@@ -58,6 +59,9 @@ const App = () => {
         <Route path="/terms-conditions" element={<TermsAndConditions />}/>
         <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
         <Route path="/refund-policy" element={<RefundPolicy />}/>
+
+        {/* Subscription Page */}
+        <Route path="/my-subscriptions" element={<MySubscriptions/>}/>
       </Routes>
       { !isPropertySearch && <Footer /> }
     </div>

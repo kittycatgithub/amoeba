@@ -1,154 +1,302 @@
-import React, { useState } from "react";
-import {
-  FaTimes,
-  FaChevronLeft,
-  FaChevronRight,
-} from "react-icons/fa";
+import React, { useState, useMemo, useCallback, Suspense, lazy } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { TfiLocationPin, TfiRulerAlt2 } from "react-icons/tfi";
+import { IoHeartOutline, IoHeart } from "react-icons/io5";
+import { TbBed, TbBookmark, TbBookmarkFilled } from "react-icons/tb";
+import { PiBathtub } from "react-icons/pi";
+import ImageDrawer from "../components/ImageDrawer";
+import { ImageCategory, type CategorizedImage } from "../types/imageTypes";
+import { useAppContext } from "../context/AppContext";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+// import { toggleShortlistItem } from "../store/slices/shortlistSlice";
+import PropertyPosterInfo from "../components/SellerInfoCard";
+import { LiaHomeSolid } from "react-icons/lia";
+import PropertyCard from "../components/PropertyCard";
 
-interface ImageType {
-  id: number;
-  url: string;
-  category: "All" | "Room" | "Lobby" | "Reception" | "Facade";
-}
+// Lazy load heavy components
+const AmenitiesSection = lazy(() => import("../components/AmenitiesSection"));
 
-const images: ImageType[] = [
-  { id: 1, url: "/house.jpg", category: "Room" },
-  { id: 2, url: "https://images.unsplash.com/photo-1582719508461-905c673771fd", category: "Room" },
-  { id: 3, url: "https://images.unsplash.com/photo-1590490360182-c33d57733427", category: "Lobby" },
-  { id: 4, url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c", category: "Reception" },
-  { id: 5, url: "https://images.unsplash.com/photo-1505691938895-1758d7feb511", category: "Facade" },
-];
+// House rules data
+// const houseRules = [
+//   { icon: "🚭", rule: "No smoking", detail: "Smoking not allowed indoors" },
+//   { icon: "🐾", rule: "Pets allowed", detail: "Pets are welcome with approval" },
+//   { icon: "🎵", rule: "No noise after 11 PM", detail: "Keep noise levels low after 11 PM" },
+//   { icon: "🧴", rule: "Keep property clean", detail: "Return property in same condition" },
+// ];
 
-const categories = ["All", "Room", "Lobby", "Reception", "Facade"] as const;
 
 const PropertyDetails: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]>("All");
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const { toggleWishlist, wishlisted, navigate, currency } = useAppContext();
+  const dispatch = useAppDispatch();
+  // Fetching properties from Redux slice instead of AppContext
+  const properties = useAppSelector(state => state.property.properties ?? []);
+  const shortlisted = useAppSelector(state => state.shortlist.ids);
 
-  const filteredImages =
-    activeCategory === "All"
-      ? images
-      : images.filter((img) => img.category === activeCategory);
+  const property = properties.find(p => p._id === id);
+  const isWishlisted = property ? wishlisted.includes(property._id) : false;
+  const isShortlisted = property ? shortlisted.includes(property._id) : false;
 
-  const openViewer = (index: number) => setSelectedIndex(index);
-  const closeViewer = () => setSelectedIndex(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const nextImage = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev! + 1) % filteredImages.length);
-    }
-  };
+  // Build categorized images from property images array
+  const categorizedImages: CategorizedImage[] = useMemo(() => {
+    if (!property) return [];
+    const cats = [ImageCategory.HALL, ImageCategory.BEDROOM, ImageCategory.BATHROOM];
+    return property.images.map((url: string, i: number) => ({
+      id: `img-${i}`,
+      url,
+      category: cats[i % cats.length],
+    }));
+  }, [property]);
 
-  const prevImage = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) =>
-        prev === 0 ? filteredImages.length - 1 : prev! - 1
-      );
-    }
-  };
+  const galleryImages = useMemo(() => categorizedImages.map(img => img.url), [categorizedImages]);
+
+  const handleImageGalleryClick = useCallback(() => setIsDrawerOpen(true), []);
+  const handleDrawerClose = useCallback(() => setIsDrawerOpen(false), []);
+
+  // Property not found
+  if (!property) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-400">
+        <p className="text-xl font-semibold">Property not found</p>
+        <button
+          onClick={() => navigate('/property-search')}
+          className="mt-4 px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-dull transition"
+        >
+          Back to Search
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 relative pb-24">
-      {/* Header */}
-      <div className="bg-white sticky top-0 z-30 border-b">
-        <div className="flex items-center justify-between px-4 py-3">
-          <h2 className="text-xl font-semibold">
-            {filteredImages.length} images
-          </h2>
-        </div>
-
-        {/* Category Tabs */}
-        <div className="flex overflow-x-auto px-4 gap-6 text-sm font-medium">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`pb-2 whitespace-nowrap border-b-2 transition ${
-                activeCategory === cat
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Section Title */}
-      <div className="px-4 py-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-bold">{activeCategory}</h3>
-          <span className="text-gray-500 text-sm">
-            {filteredImages.length} images
-          </span>
-        </div>
-      </div>
-
-      {/* Image Grid */}
-      <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredImages.map((img, index) => (
-          <div
-            key={img.id}
-            onClick={() => openViewer(index)}
-            className="rounded-xl overflow-hidden cursor-pointer bg-white shadow-sm"
-          >
-            <img
-              src={img.url}
-              alt="property"
-              className="w-full h-64 object-cover"
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Fullscreen Viewer */}
-      {selectedIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex flex-col">
-          <div className="flex justify-between items-center p-4 text-white">
-            <span>
-              {selectedIndex + 1} / {filteredImages.length}
-            </span>
-            <button onClick={closeViewer}>
-              <FaTimes size={22} />
-            </button>
-          </div>
-
-          <div className="flex-1 flex items-center justify-center relative">
-            <button
-              onClick={prevImage}
-              className="absolute left-4 text-white"
-            >
-              <FaChevronLeft size={28} />
-            </button>
-
-            <img
-              src={filteredImages[selectedIndex].url}
-              alt="fullscreen"
-              className="max-h-[80vh] w-auto object-contain"
-            />
-
-            <button
-              onClick={nextImage}
-              className="absolute right-4 text-white"
-            >
-              <FaChevronRight size={28} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Sticky Bottom Price Bar (Mobile Style) */}
-      {/* <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg px-4 py-3 flex justify-between items-center">
-        <div>
-          <div className="text-xl font-bold text-black">₹1050</div>
-          <div className="text-sm text-gray-500 line-through">₹2777</div>
-          <div className="text-sm text-blue-600">+ ₹150 taxes & fees</div>
-        </div>
-        <button className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold">
-          Book now & pay at hotel
+    <div className="bg-gray-50">
+     {console.log(property, 'property')}
+    <div className="min-h-screen bg-gray-50 max-w-5xl mx-auto">
+      <div className="flex flex-col lg:flex-row">
+          {/* MAIN IMAGE SECTION */}
+      <div
+        className="relative overflow-hidden cursor-pointer lg:w-1/2"
+        style={{ aspectRatio: "16 / 10" }}
+        onClick={handleImageGalleryClick}
+      >
+        <img
+          src={`${import.meta.env.VITE_API_URL}${galleryImages[0]}?w=1200&auto=format&fit=crop&q=80`}
+          alt={property.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 hover:bg-black/0 transition"></div>
+        <button className="absolute bottom-4 left-4 bg-white/90 hover:bg-white text-gray-700 px-4 py-2 rounded-lg font-semibold transition">
+          View all {galleryImages.length} photos
         </button>
-      </div> */}
+        {/* Status badge */}
+        <span className={`absolute top-4 left-4 text-xs font-semibold px-3 py-1 rounded-full ${
+          property.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+        }`}>
+          {property.status}
+        </span>
+      </div>
+       {/* HEADER SECTION */}
+        <div className="px-4 md:px-6 py-6 border-b border-gray-200">
+          <div className="flex flex-col justify-between items-start gap-4">
+            <div className="flex-1">
+              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                {property.category}
+              </span>
+              <h1 className="text-xl md:text-xl font-medium text-gray-800 mt-2 mb-1">
+                {property.title}
+              </h1>
+              <p className="text-gray-500 text-sm mb-3">{property.type}</p>
+
+              <div className="flex items-center gap-2 text-primary">
+                <TfiLocationPin size={16} />
+                <span className="text-sm font-medium">{property.location}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="text-xl text-black">{currency}{property.price}</div>
+              <div className="flex gap-2">
+                {/* Wishlist */}
+                <button
+                  onClick={() => toggleWishlist(property._id)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm transition ${
+                    isWishlisted
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {isWishlisted ? <IoHeart /> : <IoHeartOutline />}
+                  {isWishlisted ? 'Wishlisted' : 'Wishlist'}
+                </button>
+                {/* Shortlist */}
+                {/* <button
+                  onClick={() => dispatch(toggleShortlistItem(property._id))}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm transition ${
+                    isShortlisted
+                      ? 'bg-blue-50 border-blue-300 text-blue-600'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {isShortlisted ? <TbBookmarkFilled /> : <TbBookmark />}
+                  Shortlist
+                </button> */}
+                <button className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-semibold transition">
+                  Contact Now
+                </button>
+              </div>              
+            </div>
+          </div>
+        </div>
+      </div>
+      
+
+      {/* MAIN CONTENT */}
+      <div className="max-w-5xl mx-auto">
+        {/* Image Drawer */}
+        <ImageDrawer
+          isOpen={isDrawerOpen}
+          images={categorizedImages}
+          onClose={handleDrawerClose}
+        />      
+
+        {/* PROPERTY HIGHLIGHTS */}
+        <div className="bg-white px-4 md:px-6 py-6 border-b border-gray-200">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Property Highlights</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: <TbBed />, label: "Bedrooms", value: property.bedrooms > 0 ? `${property.bedrooms} BHK` : 'N/A' },
+              { icon: <PiBathtub />, label: "Bathrooms", value: property.bathrooms > 0 ? `${property.bathrooms}` : 'N/A' },
+              // { icon: <FaRulerCombined />, label: "Area", value: `${property.area} sqft` },
+              { icon: <TfiRulerAlt2 />, label: "Area", value: `${property.area} sqft` },
+              { icon: <LiaHomeSolid />, label: "Furnishing", value: property.furnishing },
+            ].map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <span className="text-xl text-primary">{item.icon}</span>
+                <div>
+                  <p className="text-xs text-gray-500">{item.label}</p>
+                  <p className="text-sm font-semibold text-gray-800">{item.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ABOUT PROPERTY */}
+        <div className="bg-white px-4 md:px-6 py-6 border-b border-gray-200">
+          <h2 className="text-lg font-bold text-gray-800 mb-3">About this property</h2>
+          <p className="text-gray-700 leading-relaxed">{property.description}</p>
+
+          {/* Posted by / Available for */}
+          <div className="mt-4 flex flex-wrap gap-3">
+            {/* <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+              Posted by: {property.postedBy}
+            </span> */}
+            <p className="text-sm text-gray-700 self-center">Available For -</p>
+            {property.availableFor?.map((a: string) => (
+              <span key={a} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                {a}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* AMENITIES */}
+        {property.amenities?.length > 0 && (
+          <div className="bg-white px-4 md:px-6 py-6 border-b border-gray-200">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">Amenities</h2>
+            <Suspense fallback={<div className="h-24" />}>
+              <AmenitiesSection selectedAmenities={property.amenities} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* HOUSE RULES */}
+        {/* <div className="bg-white px-4 md:px-6 py-6 border-b border-gray-200">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">House Rules</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {houseRules.map((rule, idx) => (
+              <div key={idx} className="flex gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <span className="text-xl flex-shrink-0">{rule.icon}</span>
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">{rule.rule}</p>
+                  <p className="text-xs text-gray-600">{rule.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div> */}
+
+        {/* CANCELLATION POLICY */}
+        {/* <div className="bg-white px-4 md:px-6 py-6 border-b border-gray-200">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Cancellation Policy</h2>
+          <div className="space-y-3">
+            <div className="flex gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+              <MdCheckCircle className="text-green-600 flex-shrink-0" size={20} />
+              <div>
+                <p className="font-semibold text-gray-800 text-sm">Free Cancellation</p>
+                <p className="text-xs text-gray-600">Cancel until 48 hours before check-in for full refund</p>
+              </div>
+            </div>
+            <div className="flex gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <span className="flex-shrink-0 text-lg">⚠️</span>
+              <div>
+                <p className="font-semibold text-gray-800 text-sm">Non-Refundable Rate Available</p>
+                <p className="text-xs text-gray-600">Book at lower rate with no cancellation option</p>
+              </div>
+            </div>
+          </div>
+        </div> */}
+
+        {/* CONTACT */}
+        {/* <div className="bg-white px-4 md:px-6 py-6 border-b border-gray-200">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Contact & Support</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-gray-600 mb-1">Phone</p>
+              <p className="font-semibold text-gray-800">+91 80 4043 1111</p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-gray-600 mb-1">Email</p>
+              <p className="font-semibold text-gray-800">contact@predi.in</p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-gray-600 mb-1">City</p>
+              <p className="font-semibold text-gray-800">{property.city}</p>
+            </div>
+          </div>
+        </div> */}
+      </div>
+        {/* <PropertyPosterInfo /> */}
+        <PropertyPosterInfo owner={property.owner} />
+    </div>
+
+      {/* -------------- Related Properties -------------- */}
+      <div className="flex flex-col items-center max-w-7xl mx-auto py-6">
+        <div className="flex flex-col items-center w-max">
+          <p className="text-3xl font-medium">Related Properties</p>
+          <div className="w-20 h-0.5 bg-primary rounded-full mt-2"></div>
+        </div>
+
+        {(() => {
+          const related = properties
+            .filter((p) => p.status === "Available" && p.location === property.location);
+
+          return related.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-4 mt-6 w-full px-6 md:px-0">
+              {related.map((p) => (
+                <PropertyCard key={p.id} property={p} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 mt-6">No related properties found.</p>
+          );
+        })()}
+        <button onClick={()=> {navigate('/property-search'); scrollTo(0,0)}} className="mx-auto cursor-pointer px-12 my-6 py-2.5 border text-primary hover:bg-primary/10 transition rounded-lg">
+            See More
+        </button>
+      </div>
     </div>
   );
 };

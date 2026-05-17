@@ -11,7 +11,6 @@ import { useAppDispatch } from "../store/hooks";
 const SearchPage = () => {
   // Fetching properties from Redux slice instead of AppContext
   const properties = useAppSelector(state => state.property.properties ?? []);
-  console.log(properties, 'properties')
   const filters = useAppSelector(state => state.filters);
   const dispatch = useAppDispatch();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

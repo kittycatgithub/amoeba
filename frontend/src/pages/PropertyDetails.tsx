@@ -1,16 +1,24 @@
 import React, { useState, useMemo, useCallback, Suspense, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { TfiLocationPin, TfiRulerAlt2 } from "react-icons/tfi";
-import { IoHeartOutline, IoHeart } from "react-icons/io5";
+import { IoHeartOutline, IoHeart, IoShareSocialOutline, IoClose } from "react-icons/io5";
 import { TbBed, TbBookmark, TbBookmarkFilled } from "react-icons/tb";
-import { PiBathtub } from "react-icons/pi";
+import { PiBathtub, PiPhoneCallFill } from "react-icons/pi";
+import {
+  FaWhatsapp,
+  FaFacebookF,
+  FaTwitter,
+  FaTelegramPlane,
+  FaLink,
+} from "react-icons/fa";
 import ImageDrawer from "../components/ImageDrawer";
 import { ImageCategory, type CategorizedImage } from "../types/imageTypes";
 import { useAppContext } from "../context/AppContext";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { toggleShortlistItem } from "../store/slices/shortlistSlice";
+// import { toggleShortlistItem } from "../store/slices/shortlistSlice";
 import PropertyPosterInfo from "../components/SellerInfoCard";
 import { LiaHomeSolid } from "react-icons/lia";
+import PropertyCard from "../components/PropertyCard";
 
 // Lazy load heavy components
 const AmenitiesSection = lazy(() => import("../components/AmenitiesSection"));
@@ -26,9 +34,10 @@ const AmenitiesSection = lazy(() => import("../components/AmenitiesSection"));
 
 const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { properties, toggleWishlist, wishlisted } = useAppContext();
+  const { toggleWishlist, wishlisted, navigate, currency } = useAppContext();
   const dispatch = useAppDispatch();
+  // Fetching properties from Redux slice instead of AppContext
+  const properties = useAppSelector(state => state.property.properties ?? []);
   const shortlisted = useAppSelector(state => state.shortlist.ids);
 
   const property = properties.find(p => p._id === id);
@@ -36,6 +45,8 @@ const PropertyDetails: React.FC = () => {
   const isShortlisted = property ? shortlisted.includes(property._id) : false;
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Build categorized images from property images array
   const categorizedImages: CategorizedImage[] = useMemo(() => {
@@ -52,6 +63,47 @@ const PropertyDetails: React.FC = () => {
 
   const handleImageGalleryClick = useCallback(() => setIsDrawerOpen(true), []);
   const handleDrawerClose = useCallback(() => setIsDrawerOpen(false), []);
+
+  // Share handlers
+  const propertyUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareTitle = property ? `${property.title} – ${property.location}` : "Property";
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(propertyUrl);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch {
+      // fallback silent fail
+    }
+  }, [propertyUrl]);
+
+  const shareOptions = useMemo(() => [
+    {
+      label: "WhatsApp",
+      icon: <FaWhatsapp size={18} />,
+      color: "bg-green-500 hover:bg-green-600",
+      href: `https://wa.me/?text=${encodeURIComponent(`${shareTitle} – ${propertyUrl}`)}`,
+    },
+    {
+      label: "Facebook",
+      icon: <FaFacebookF size={16} />,
+      color: "bg-blue-600 hover:bg-blue-700",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`,
+    },
+    {
+      label: "Twitter / X",
+      icon: <FaTwitter size={17} />,
+      color: "bg-sky-500 hover:bg-sky-600",
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(propertyUrl)}`,
+    },
+    {
+      label: "Telegram",
+      icon: <FaTelegramPlane size={17} />,
+      color: "bg-blue-400 hover:bg-blue-500",
+      href: `https://t.me/share/url?url=${encodeURIComponent(propertyUrl)}&text=${encodeURIComponent(shareTitle)}`,
+    },
+  ], [shareTitle, propertyUrl]);
 
   // Property not found
   if (!property) {
@@ -112,23 +164,28 @@ const PropertyDetails: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <div className="text-xl text-black">{property.price}</div>
-              <div className="flex gap-2">
+            <div className="flex flex-col gap-3 w-full">
+              <div className="text-xl text-black">{currency}{property.price}</div>
+
+              {/* ── Action buttons row ── */}
+              <div className="flex items-center gap-2 flex-wrap">
+
                 {/* Wishlist */}
                 <button
                   onClick={() => toggleWishlist(property._id)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm transition ${
                     isWishlisted
-                      ? 'bg-primary/10 border-primary/30 text-primary'
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      // ? 'bg-primary/10 border-primary/30 text-themered-dull'
+                      ? ' border-themered-dull text-themered-dull'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50 pr-8'
                   }`}
                 >
                   {isWishlisted ? <IoHeart /> : <IoHeartOutline />}
                   {isWishlisted ? 'Wishlisted' : 'Wishlist'}
                 </button>
+
                 {/* Shortlist */}
-                <button
+                {/* <button
                   onClick={() => dispatch(toggleShortlistItem(property._id))}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm transition ${
                     isShortlisted
@@ -138,11 +195,84 @@ const PropertyDetails: React.FC = () => {
                 >
                   {isShortlisted ? <TbBookmarkFilled /> : <TbBookmark />}
                   Shortlist
-                </button>
-                <button className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-semibold transition">
+                </button> */}
+
+                {/* Share button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsShareOpen(prev => !prev)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm transition"
+                  >
+                    <IoShareSocialOutline size={16} />
+                    Share
+                  </button>
+
+                  {/* Share dropdown */}
+                  {isShareOpen && (
+                    <div className="absolute left-0 top-11 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-3 w-52">
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
+                        <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Share via</span>
+                        <button onClick={() => setIsShareOpen(false)} className="text-gray-400 hover:text-gray-600 transition">
+                          <IoClose size={15} />
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        {shareOptions.map(opt => (
+                          <a
+                            key={opt.label}
+                            href={opt.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-white text-sm font-medium transition ${opt.color}`}
+                            onClick={() => setIsShareOpen(false)}
+                          >
+                            {opt.icon}
+                            {opt.label}
+                          </a>
+                        ))}
+                        {/* Copy link */}
+                        <button
+                          onClick={handleCopyLink}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition"
+                        >
+                          <FaLink size={14} />
+                          {copySuccess ? "Copied!" : "Copy link"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Contact Now — OLD BUTTON (commented out) */}
+                {/* <button className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-semibold transition">
                   Contact Now
-                </button>
-              </div>              
+                </button> */}
+
+                {/* Contact Now — Call button with icon in circle */}
+                {/* <a
+                  href={`tel:${property.owner?.phone}`}
+                  className="flex items-center gap-2.5 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-full font-semibold text-sm transition shadow-sm"
+                  title={`Call ${property.owner?.name ?? 'owner'}`}
+                >
+                  Call icon in a circle
+                  <span className="flex items-center justify-center w-7 h-7 bg-white/20 rounded-full flex-shrink-0">
+                    <PiPhoneCallFill size={15} />
+                  </span>
+                  Contact Now
+                </a> */}
+                <a
+                  href={`tel:${property.owner?.phone}`}
+                  className="flex items-center gap-2.5 bg-primary hover:bg-primary/80 text-white pl-1 py-1 pr-4 rounded-full font-semibold text-sm transition shadow-sm"
+                  title={`Call ${property.owner?.name ?? 'owner'}`}
+                >
+                  {/* Call icon in a circle */}
+                  <span className="flex items-center justify-center w-7 h-7 bg-white/20 rounded-full flex-shrink-0">
+                    <PiPhoneCallFill size={15} />
+                  </span>
+                  Call
+                </a>
+
+              </div>
             </div>
           </div>
         </div>
@@ -156,9 +286,7 @@ const PropertyDetails: React.FC = () => {
           isOpen={isDrawerOpen}
           images={categorizedImages}
           onClose={handleDrawerClose}
-        />
-
-       
+        />      
 
         {/* PROPERTY HIGHLIGHTS */}
         <div className="bg-white px-4 md:px-6 py-6 border-b border-gray-200">
@@ -189,9 +317,10 @@ const PropertyDetails: React.FC = () => {
 
           {/* Posted by / Available for */}
           <div className="mt-4 flex flex-wrap gap-3">
-            <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+            {/* <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
               Posted by: {property.postedBy}
-            </span>
+            </span> */}
+            <p className="text-sm text-gray-700 self-center">Available For -</p>
             {property.availableFor?.map((a: string) => (
               <span key={a} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
                 {a}
@@ -268,8 +397,33 @@ const PropertyDetails: React.FC = () => {
       </div>
         {/* <PropertyPosterInfo /> */}
         <PropertyPosterInfo owner={property.owner} />
-
     </div>
+
+      {/* -------------- Related Properties -------------- */}
+      <div className="flex flex-col items-center max-w-7xl mx-auto py-6">
+        <div className="flex flex-col items-center w-max">
+          <p className="text-3xl font-medium">Related Properties</p>
+          <div className="w-20 h-0.5 bg-primary rounded-full mt-2"></div>
+        </div>
+
+        {(() => {
+          const related = properties
+            .filter((p) => p.status === "Available" && p.location === property.location);
+
+          return related.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-4 mt-6 w-full px-6 md:px-0">
+              {related.map((p) => (
+                <PropertyCard key={p._id} property={p} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 mt-6">No related properties found.</p>
+          );
+        })()}
+        <button onClick={()=> {navigate('/property-search'); scrollTo(0,0)}} className="mx-auto cursor-pointer px-12 my-6 py-2.5 border text-primary hover:bg-primary/10 transition rounded-lg">
+            See More
+        </button>
+      </div>
     </div>
   );
 };

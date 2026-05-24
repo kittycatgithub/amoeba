@@ -22,14 +22,21 @@ import TermsAndConditions from "./pages/TermsAndConditions"
 import PrivacyPolicy from "./pages/PrivacyPolicy"
 import RefundPolicy from "./pages/RefundPolicy"
 import MySubscriptions from "./pages/MySubscriptions"
+import AdminLogin from "./components/superadmin/AdminLogin"
+import AdminLayout from "./pages/admin/AdminLayout"
+import AdminAddProperty from "./pages/admin/AdminAddProperty"
+import PropertiesList from "./pages/admin/PropertiesList"
+import Users from "./pages/admin/Users"
+import AdminDashboard from "./pages/admin/AdminDashboard"
 
 const App = () => {
 
   const isAdminPath = useLocation().pathname.includes('admin')
-  const { showUserLogin, showRegister, showForgotPassword } = useAppContext()
+  const { showUserLogin, showRegister, showForgotPassword, isAdmin } = useAppContext()
   const isPropertySearch = useLocation().pathname.includes('property-search')
 
   return (  
+    // <div className="text-default min-h-screen text-gray-700 bg-white">
     <div>
       {isAdminPath ? null : <Navbar />}
       {showUserLogin ? <Login /> : null}
@@ -38,7 +45,7 @@ const App = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/admin" element={<Services />} />
+        {/* <Route path="/admin" element={<Services />} /> */}
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/shortlisted" element={<Shortlisted />} />
         <Route path="/settings" element={<Settings />} />
@@ -62,8 +69,18 @@ const App = () => {
 
         {/* Subscription Page */}
         <Route path="/my-subscriptions" element={<MySubscriptions/>}/>
+
+        {/* Private Route - because no role involved */}
+        <Route path="/admin" element={ isAdmin ? <AdminLayout/> : <AdminLogin/> }>
+          {/* index means at route /admin itself */}
+          <Route index element={ isAdmin && <AdminDashboard/>}/>
+          <Route path="add-property" element={<AdminAddProperty/>}/>
+          <Route path="properties-list" element={<PropertiesList/>}/>
+          <Route path="users" element={<Users/>}/>
+        </Route>
       </Routes>
-      { !isPropertySearch && <Footer /> }
+      {/* { !isPropertySearch && <Footer /> } */}
+      { (!isPropertySearch && !isAdminPath) && <Footer /> }
     </div>
   )
 }

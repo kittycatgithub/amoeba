@@ -19,6 +19,8 @@ interface AppContextType {
   logout: () => void;
   showUserLogin: boolean;
   setShowUserLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  isAdmin: boolean;
+  setIsAdmin: React.Dispatch<React.SetStateAction<boolean>>;
   showRegister: boolean;
   setShowRegister: React.Dispatch<React.SetStateAction<boolean>>;
   showForgotPassword: boolean;
@@ -39,9 +41,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const currency = import.meta.env.VITE_CURRENCY || '₹';
 
+  // User States
   const [showUserLogin, setShowUserLogin]           = useState(false);
   const [showRegister, setShowRegister]             = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // Admin States
+  const [isAdmin, setIsAdmin] = useState(true) 
 
   const dispatch    = useAppDispatch();
   const user        = useAppSelector(state => state.user.isLoggedIn);
@@ -82,7 +88,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     showForgotPassword, setShowForgotPassword,
     currency,
     wishlisted, shortlisted,
-    toggleWishlist, toggleShortlist,
+    toggleWishlist, toggleShortlist, isAdmin, setIsAdmin
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

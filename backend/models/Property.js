@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const propertySchema = new mongoose.Schema(
   {
@@ -30,4 +30,4 @@ const propertySchema = new mongoose.Schema(
 // Text index for search
 propertySchema.index({ title: 'text', location: 'text', city: 'text' });
 
-module.exports = mongoose.model('Property', propertySchema);
+export default mongoose.model('Property', propertySchema);

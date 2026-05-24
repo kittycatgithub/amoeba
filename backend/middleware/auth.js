@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 // Verify JWT token from HTTP-only cookie and attach user to request
 const auth = async (req, res, next) => {
@@ -51,4 +51,4 @@ const requireRole = (...roles) => {
   };
 };
 
-module.exports = { auth, optionalAuth, requireRole };
+export { auth, optionalAuth, requireRole }; 

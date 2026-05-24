@@ -1,8 +1,8 @@
-const Feedback = require('../models/Feedback');
-const { validationResult } = require('express-validator');
+import Feedback from '../models/Feedback.js';
+import { validationResult } from 'express-validator';
 
 // ─── Submit Feedback ────────────────────────────────────────
-exports.submitFeedback = async (req, res) => {
+export const submitFeedback = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -24,7 +24,7 @@ exports.submitFeedback = async (req, res) => {
 };
 
 // ─── Get All Feedback ───────────────────────────────────────
-exports.getFeedback = async (req, res) => {
+export const getFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.find().sort({ createdAt: -1 });
     res.json({ feedback });

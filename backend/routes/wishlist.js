@@ -1,6 +1,6 @@
-const express = require('express');
-const wishlistController = require('../controllers/wishlistController');
-const { auth } = require('../middleware/auth');
+import express from 'express';
+import * as wishlistController from '../controllers/wishlistController.js';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -10,4 +10,4 @@ router.post('/:propertyId',    auth, wishlistController.addToWishlist);
 router.delete('/:propertyId',  auth, wishlistController.removeFromWishlist);
 router.delete('/',             auth, wishlistController.clearWishlist);  // for "Clear All"
 
-module.exports = router;
+export default router;

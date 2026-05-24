@@ -2,11 +2,13 @@
  * Seed script — populates the database with sample properties and a demo user.
  * Run: node seed.js
  */
-require('dotenv').config();
-const mongoose = require('mongoose');
-const User = require('./models/User');
-const Property = require('./models/Property');
-const connectDB = require('./config/db');
+import dotenv from 'dotenv';
+dotenv.config();
+
+import mongoose from 'mongoose';
+import User from './models/User.js';
+import Property from './models/Property.js';
+import connectDB from './config/db.js';
 
 const sampleProperties = [
   { title: "Elan The Emperor - 3 BHK", category: "Buy", price: "1.2 Cr", priceValue: 120, area: "1800 Sq.Ft", areaValue: 1800, type: "Residential Apartment", bedrooms: 3, bathrooms: 2, furnishing: "Semi-Furnished", availableFor: ["Family"], amenities: ["Parking","Lift","Power Backup","Swimming Pool","Gymnasium","Park / Garden","CCTV Security","Club House"], location: "Sector 106, Gurugram", city: "Gurugram", description: "A premium 3 BHK apartment in a gated community with world-class amenities.", availability: "Ready to Move" },

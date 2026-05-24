@@ -1,7 +1,7 @@
-const express = require('express');
-const { body } = require('express-validator');
-const contactController = require('../controllers/contactController');
-const { auth } = require('../middleware/auth');
+import express from 'express';
+import { body } from 'express-validator';
+import * as contactController from '../controllers/contactController.js';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -18,4 +18,4 @@ router.post(
 
 router.get('/', auth, contactController.getContacts);
 
-module.exports = router;
+export default router;

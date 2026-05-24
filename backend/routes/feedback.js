@@ -1,6 +1,6 @@
-const express = require('express');
-const { body } = require('express-validator');
-const feedbackController = require('../controllers/feedbackController');
+import express from 'express';
+import { body } from 'express-validator';
+import * as feedbackController from '../controllers/feedbackController.js';
 
 const router = express.Router();
 
@@ -17,4 +17,4 @@ router.post(
 
 router.get('/', feedbackController.getFeedback);
 
-module.exports = router;
+export default router;

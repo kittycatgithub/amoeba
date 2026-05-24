@@ -1,8 +1,8 @@
-const Contact = require('../models/Contact');
-const { validationResult } = require('express-validator');
+import Contact from '../models/Contact.js';
+import { validationResult } from 'express-validator';
 
 // ─── Submit Contact Form ────────────────────────────────────
-exports.submitContact = async (req, res) => {
+export const submitContact = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -26,7 +26,7 @@ exports.submitContact = async (req, res) => {
 };
 
 // ─── Get All Contacts (protected) ───────────────────────────
-exports.getContacts = async (req, res) => {
+export const getContacts = async (req, res) => {
   try {
     const contacts = await Contact.find()
       .populate('property', 'title city')

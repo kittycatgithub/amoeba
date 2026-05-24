@@ -1,7 +1,7 @@
-const express = require('express');
-const { body } = require('express-validator');
-const authController = require('../controllers/authController');
-const { auth } = require('../middleware/auth');
+import express from 'express';
+import { body } from 'express-validator';
+import * as authController from '../controllers/authController.js'; // namespace import
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -60,4 +60,4 @@ router.get('/me', auth, authController.getMe);
 // Update profile (protected)
 router.put('/profile', auth, authController.updateProfile);
 
-module.exports = router;
+export default router; // ✅ ES Module export

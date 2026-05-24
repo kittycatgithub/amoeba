@@ -1,9 +1,14 @@
-const Property = require('../models/Property');
-const fs = require('fs');
-const path = require('path');
+import Property from '../models/Property.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // ─── Create Property ────────────────────────────────────────
-exports.createProperty = async (req, res) => {
+export const createProperty = async (req, res) => {
   try {
     const {
       title, category, price, priceValue, area, areaValue,
@@ -44,7 +49,7 @@ exports.createProperty = async (req, res) => {
 };
 
 // ─── Get All Properties (with filters + pagination) ─────────
-exports.getProperties = async (req, res) => {
+export const getProperties = async (req, res) => {
   try {
     const {
       page = 1, limit = 50, category, city, search,
@@ -119,7 +124,7 @@ exports.getProperties = async (req, res) => {
 };
 
 // ─── Get Single Property ────────────────────────────────────
-exports.getProperty = async (req, res) => {
+export const getProperty = async (req, res) => {
   try {
     // const property = await Property.findById(req.params.id).populate('owner', 'name email phone role');
     const property = await Property.findById(req.params.id).populate('owner', 'name email phone avatar role');
@@ -133,7 +138,7 @@ exports.getProperty = async (req, res) => {
 };
 
 // ─── Get My Properties ──────────────────────────────────────
-exports.getMyProperties = async (req, res) => {
+export const getMyProperties = async (req, res) => {
   try {
     const properties = await Property.find({ owner: req.user._id })
       .sort({ createdAt: -1 });
@@ -145,7 +150,7 @@ exports.getMyProperties = async (req, res) => {
 };
 
 // ─── Update Property ────────────────────────────────────────
-exports.updateProperty = async (req, res) => {
+export const updateProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
     if (!property) return res.status(404).json({ message: 'Property not found' });
@@ -216,7 +221,7 @@ exports.updateProperty = async (req, res) => {
 };
 
 // ─── Delete Property ────────────────────────────────────────
-exports.deleteProperty = async (req, res) => {
+export const deleteProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
     if (!property) return res.status(404).json({ message: 'Property not found' });

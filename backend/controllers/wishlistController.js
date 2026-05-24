@@ -1,7 +1,7 @@
-const Wishlist = require('../models/Wishlist');
+import Wishlist from '../models/Wishlist.js';
 
 // ─── Get Wishlist ────────────────────────────────────────────
-exports.getWishlist = async (req, res) => {
+export const getWishlist = async (req, res) => {
   try {
     const items = await Wishlist.find({ user: req.user._id })
       .populate('property')   // returns full property objects
@@ -18,7 +18,7 @@ exports.getWishlist = async (req, res) => {
 };
 
 // ─── Add to Wishlist ─────────────────────────────────────────
-exports.addToWishlist = async (req, res) => {
+export const addToWishlist = async (req, res) => {
   try {
     const { propertyId } = req.params;
 
@@ -37,7 +37,7 @@ exports.addToWishlist = async (req, res) => {
 };
 
 // ─── Remove from Wishlist ────────────────────────────────────
-exports.removeFromWishlist = async (req, res) => {
+export const removeFromWishlist = async (req, res) => {
   try {
     const { propertyId } = req.params;
 
@@ -51,7 +51,7 @@ exports.removeFromWishlist = async (req, res) => {
 };
 
 // ─── Clear Wishlist ──────────────────────────────────────────
-exports.clearWishlist = async (req, res) => {
+export const clearWishlist = async (req, res) => {
   try {
     await Wishlist.deleteMany({ user: req.user._id });
     res.json({ message: 'Wishlist cleared' });

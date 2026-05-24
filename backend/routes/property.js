@@ -1,7 +1,7 @@
-const express = require('express');
-const propertyController = require('../controllers/propertyController');
-const { auth, requireRole } = require('../middleware/auth');
-const upload = require('../middleware/upload');
+import express from 'express';
+import * as propertyController from '../controllers/propertyController.js';
+import { auth, requireRole } from '../middleware/auth.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -38,4 +38,4 @@ router.delete(
   propertyController.deleteProperty
 );
 
-module.exports = router;
+export default router;

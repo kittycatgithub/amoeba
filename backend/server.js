@@ -1,16 +1,23 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const connectDB = require('./config/db');
-const cookieParser = require('cookie-parser');
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import connectDB from './config/db.js';
+import cookieParser from 'cookie-parser';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Route imports
-const authRoutes = require('./routes/auth');
-const propertyRoutes = require('./routes/property');
-const wishlistRoutes = require('./routes/wishlist');
-const contactRoutes = require('./routes/contact');
-const feedbackRoutes = require('./routes/feedback');
+import authRoutes from './routes/auth.js';
+import propertyRoutes from './routes/property.js';
+import wishlistRoutes from './routes/wishlist.js';
+import contactRoutes from './routes/contact.js';
+import feedbackRoutes from './routes/feedback.js';
 
 const app = express(); //created app using Express Package
 

@@ -1,8 +1,8 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const Otp = require('../models/Otp');
-const { sendEmail, generateOTP } = require('../utils/sendEmail');
-const { validationResult } = require('express-validator');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import Otp from '../models/Otp.js';
+import { sendEmail, generateOTP } from '../utils/sendEmail.js';
+import { validationResult } from 'express-validator';
 
 const sendTokenCookie = (res, token) => {
   res.cookie('token', token, {
@@ -17,7 +17,7 @@ const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
 
 // ─── Send Registration OTP ──────────────────────────────────
-exports.sendRegisterOtp = async (req, res) => {
+export const sendRegisterOtp = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -64,7 +64,7 @@ exports.sendRegisterOtp = async (req, res) => {
 };
 
 // ─── Verify OTP & Register ──────────────────────────────────
-exports.verifyOtpAndRegister = async (req, res) => {
+export const verifyOtpAndRegister = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -122,7 +122,7 @@ exports.verifyOtpAndRegister = async (req, res) => {
 };
 
 // ─── Login ──────────────────────────────────────────────────
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -158,7 +158,7 @@ exports.login = async (req, res) => {
 };
 
 // ─── Logout (client-side token removal) ─────────────────────
-exports.logout = async (req, res) => {
+export const logout = async (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -168,7 +168,7 @@ exports.logout = async (req, res) => {
 };
 
 // ─── Forgot Password — Send OTP ─────────────────────────────
-exports.forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
@@ -205,7 +205,7 @@ exports.forgotPassword = async (req, res) => {
 };
 
 // ─── Reset Password ─────────────────────────────────────────
-exports.resetPassword = async (req, res) => {
+export const resetPassword = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -237,7 +237,7 @@ exports.resetPassword = async (req, res) => {
 };
 
 // ─── Get Current User ───────────────────────────────────────
-exports.getMe = async (req, res) => {
+export const getMe = async (req, res) => {
   res.json({
     user: {
       id: req.user._id,
@@ -252,7 +252,7 @@ exports.getMe = async (req, res) => {
 };
 
 // ─── Update Profile ─────────────────────────────────────────
-exports.updateProfile = async (req, res) => {
+export const updateProfile = async (req, res) => {
   try {
     const { name, phone, avatar } = req.body;
     const updates = {};

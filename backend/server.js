@@ -8,6 +8,8 @@ import connectDB from './config/db.js';
 import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import './models/User.js';    
+import './models/Property.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,11 +20,18 @@ import propertyRoutes from './routes/property.js';
 import wishlistRoutes from './routes/wishlist.js';
 import contactRoutes from './routes/contact.js';
 import feedbackRoutes from './routes/feedback.js';
+import adminRouter from './routes/adminRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import connectCloudinary from './config/cloudinary.js';
 
 const app = express(); //created app using Express Package
 
+// files of config folder function calls here
+await connectCloudinary()
+
 app.get('/', (req, res)=> res.send('API is working') )
 
+// Allow multiple origins
 const allowedOrigins = ['http://localhost:5173', 'http://192.168.1.42']
 
 // ─── Middleware ──────────────────────────────────────────────
@@ -43,6 +52,8 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/users/wishlist', wishlistRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/admin', adminRouter);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));

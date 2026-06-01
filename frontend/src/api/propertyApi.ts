@@ -48,10 +48,19 @@ export const getPropertyApi = (id: string) =>
 export const getMyPropertiesApi = () =>
   api.get('/api/properties/user/my-properties');
 
-export const createPropertyApi = (formData: FormData) =>
-  api.post('/api/properties', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+// export const createPropertyApi = (formData: FormData) =>
+//   api.post('/api/properties', formData, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+
+// createProperty now sends plain JSON
+export const createPropertyApi = async (payload: Record<string, any>) => {
+  const { data } = await api.post('/api/properties/create', payload, {
+    headers: { 'Content-Type': 'application/json' },
+    withCredentials: true,
   });
+  return data;
+};
 
 export const updatePropertyApi = (id: string, formData: FormData) =>
   api.put(`/api/properties/${id}`, formData, {

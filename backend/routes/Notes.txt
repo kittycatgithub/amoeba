@@ -1,0 +1,1 @@
+In routes folder, create API routes.

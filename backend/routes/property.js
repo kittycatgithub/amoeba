@@ -1,7 +1,6 @@
 import express from 'express';
 import * as propertyController from '../controllers/propertyController.js';
 import { auth, requireRole } from '../middleware/auth.js';
-import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -19,7 +18,6 @@ router.post(
   '/',
   auth,
   requireRole(...posterRoles),
-  upload.array('images', 6),
   propertyController.createProperty
 );
 
@@ -27,7 +25,6 @@ router.put(
   '/:id',
   auth,
   requireRole(...posterRoles),
-  upload.array('images', 6),
   propertyController.updateProperty
 );
 

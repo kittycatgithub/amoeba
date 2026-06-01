@@ -6,10 +6,10 @@ import { validationResult } from 'express-validator';
 
 const sendTokenCookie = (res, token) => {
   res.cookie('token', token, {
-    httpOnly: true,                                      // JS can't read it — XSS safe
-    secure: process.env.NODE_ENV === 'production',       // HTTPS only in prod
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // cross-site in prod
-    maxAge: 7 * 24 * 60 * 60 * 1000,                   // 7 days in ms
+    httpOnly: true,    //Prevent JavaScript to access cookie
+    secure: process.env.NODE_ENV === 'production',    // Use secure cookies in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', // cross-site in production - CSRF protection
+    maxAge: 7 * 24 * 60 * 60 * 1000,                  // 7 days in ms - Cookie expiration time
   });
 };
 
@@ -63,7 +63,7 @@ export const sendRegisterOtp = async (req, res) => {
   }
 };
 
-// ─── Verify OTP & Register ──────────────────────────────────
+// ─── Verify OTP & Register User : /api/auth/verify-otp-register
 export const verifyOtpAndRegister = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -91,7 +91,6 @@ export const verifyOtpAndRegister = async (req, res) => {
       name,
       email: email.toLowerCase(),
       password,
-      // phone: phone || '',
       phone: phone,
       role: role || 'User',
       isVerified: true,
@@ -100,7 +99,7 @@ export const verifyOtpAndRegister = async (req, res) => {
     await Otp.deleteMany({ email: email.toLowerCase(), type: 'registration' });
 
     const token = signToken(user._id);
-    sendTokenCookie(res, token);               // ← set cookie
+    sendTokenCookie(res, token);               // set cookie
 
     res.status(201).json({
       message: 'Registration successful',

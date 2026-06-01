@@ -1,0 +1,1 @@
+In controllers folder, create controller files for different routes

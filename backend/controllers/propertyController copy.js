@@ -1,6 +1,11 @@
 import Property from '../models/Property.js';
-import User from '../models/User.js'; 
-import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // ─── Create Property ────────────────────────────────────────
 export const createProperty = async (req, res) => {
@@ -12,9 +17,7 @@ export const createProperty = async (req, res) => {
       images,   // array of Cloudinary URLs sent by client
     } = req.body;
 
-    if (images.length > 6) {
-      return res.status(400).json({ message: 'Maximum 6 images allowed per property' });
-    }
+    const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
 
     const property = await Property.create({
       title,
@@ -32,7 +35,7 @@ export const createProperty = async (req, res) => {
       owner: req.user._id,
       availableFor: availableFor ? JSON.parse(availableFor) : [],
       amenities: amenities ? JSON.parse(amenities) : [],
-      images: Array.isArray(images) ? images : [],  // Cloudinary https:// URLs
+      images,
       location,
       city,
       description: description || '',
@@ -160,26 +163,9 @@ export const updateProperty = async (req, res) => {
       title, category, price, priceValue, area, areaValue,
       type, status, bedrooms, bathrooms, furnishing, availableFor,
       amenities, location, city, description, availability,
-      images,          // final URL array after client-side edits
-      imagesToRemove,  // Cloudinary URLs the user removed
+      existingImages, imagesToRemove,
     } = req.body;
 
-    // Delete removed images from Cloudinary
-    if (Array.isArray(imagesToRemove) && imagesToRemove.length > 0) {
-      const publicIds = imagesToRemove.map(url => {
-        // Extract public_id from URL  e.g. "properties/abc123"
-        const parts = url.split('/');
-        const file = parts[parts.length - 1].split('.')[0];
-        const folder = parts[parts.length - 2];
-        return `${folder}/${file}`;
-      });
-
-      await Promise.all(
-        publicIds.map(id => cloudinary.uploader.destroy(id))
-      );
-    }
-
-    // Apply field updates
     if (title !== undefined) property.title = title;
     if (category !== undefined) property.category = category;
     if (price !== undefined) property.price = price;
@@ -197,8 +183,35 @@ export const updateProperty = async (req, res) => {
     if (city !== undefined) property.city = city;
     if (description !== undefined) property.description = description;
     if (availability !== undefined) property.availability = availability;
-    if (images !== undefined) property.images = images;
 
+    // Handle image management
+    let updatedImages = property.images;
+
+    // Remove images that user marked for deletion
+    if (imagesToRemove) {
+      const toRemove = JSON.parse(imagesToRemove);
+      updatedImages = updatedImages.filter(img => !toRemove.includes(img));
+      
+      // Delete associated image files from server
+      toRemove.forEach(img => {
+        const filePath = path.join(__dirname, '..', img);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+          } catch (err) {
+            console.error('Failed to delete image file:', err);
+          }
+        }
+      });
+    }
+
+    // Add new images
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(f => `/uploads/${f.filename}`);
+      updatedImages = [...updatedImages, ...newImages];
+    }
+
+    property.images = updatedImages;
     property.updatedBy = req.user._id;
     await property.save();
     res.json({ message: 'Property updated', property });
@@ -217,16 +230,11 @@ export const deleteProperty = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this property' });
     }
 
-    // Delete all images from Cloudinary
-    if (property.images?.length > 0) {
-      const publicIds = property.images.map(url => {
-        const parts = url.split('/');
-        const file = parts[parts.length - 1].split('.')[0];
-        const folder = parts[parts.length - 2];
-        return `${folder}/${file}`;
-      });
-      await Promise.all(publicIds.map(id => cloudinary.uploader.destroy(id)));
-    }
+    // Delete associated image files
+    property.images.forEach(img => {
+      const filePath = path.join(__dirname, '..', img);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    });
 
     await Property.findByIdAndDelete(req.params.id);
     res.json({ message: 'Property deleted' });

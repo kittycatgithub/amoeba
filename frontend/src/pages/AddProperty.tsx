@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast'
 import { useAppContext } from '../context/AppContext'
 import { createPropertyApi } from '../api/propertyApi'
 import { motion } from "framer-motion";
+import { uploadToCloudinary } from '../utils/uploadToCloudinary'
 
 const CITIES = [
   'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai', 'Kolkata',
@@ -135,6 +136,8 @@ const AddProperty = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [submitting, setSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // ─── Image upload state (add this alongside existing useState hooks) ─────────
+  const [uploadProgress, setUploadProgress] = useState(0); // 0–100
 
   // ─── Derived visibility flags ───────────────────────────────────────────────
   const showRooms       = !NO_ROOMS_CATS.has(form.category)
@@ -218,59 +221,140 @@ const AddProperty = () => {
   }
 
   // ─── Submit ─────────────────────────────────────────────────────────────────
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault()
+  //   if (!validate()) {
+  //     toast.error('Please fill all required fields')
+  //     return
+  //   }
+  //   setSubmitting(true)
+  //   try {
+  //     const priceNum = Number(form.price)
+  //     const areaNum = Number(form.area)
+  //     const priceDisplay =
+  //       form.priceUnit === '₹/mo'    ? `${priceNum}/mo`
+  //       : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
+  //       : `${priceNum} ${form.priceUnit}`
+
+  //     const fd = new FormData()
+  //     fd.append('title', form.title)
+  //     fd.append('category', form.category)
+  //     fd.append('price', priceDisplay)
+  //     fd.append('priceValue', String(priceNum))
+  //     fd.append('area', `${areaNum} Sq.Ft`)
+  //     fd.append('areaValue', String(areaNum))
+  //     fd.append('type', form.propertyType)
+  //     fd.append('bedrooms', form.bedrooms || '0')
+  //     fd.append('bathrooms', form.bathrooms || '0')
+  //     fd.append('furnishing', form.furnishing)
+  //     fd.append('availableFor', JSON.stringify(form.availableFor))
+  //     fd.append('amenities', JSON.stringify(form.amenities))
+  //     fd.append('location', `${form.locality}, ${form.city}`)
+  //     fd.append('city', form.city)
+  //     fd.append('description', form.description)
+  //     fd.append('availability', form.availability || 'Ready to Move')
+  //     if (showProjectInfo) {
+  //       fd.append('builderName', form.builderName)
+  //       fd.append('projectStatus', form.projectStatus)
+  //       fd.append('reraNumber', form.reraNumber)
+  //       fd.append('launchDate', form.launchDate)
+  //     }
+  //     images.forEach(file => fd.append('images', file))
+
+  //     await createPropertyApi(fd)
+  //     setForm(initialForm)
+  //     setImages([])
+  //     setPreviews([])
+  //     setErrors({})
+  //     toast.success('Property listed successfully!')
+  //     window.scrollTo(0,0)
+  //   } catch (err: any) {
+  //     toast.error(err.response?.data?.message || 'Failed to post property')
+  //   } finally {
+  //     setSubmitting(false)
+  //   }
+  // }
+  // ─── Replace handleSubmit ────────────────────────────────────────────────────
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('handleSubmit called');        // ← does this log?
+  console.log('validate result:', validate()); // ← is this false?
+  console.log('current errors:', errors);
     if (!validate()) {
-      toast.error('Please fill all required fields')
-      return
+      toast.error('Please fill all required fields');
+      return;
     }
-    setSubmitting(true)
+    setSubmitting(true);
+    setUploadProgress(0);
+
     try {
-      const priceNum = Number(form.price)
-      const areaNum = Number(form.area)
-      const priceDisplay =
-        form.priceUnit === '₹/mo'    ? `${priceNum}/mo`
-        : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
-        : `${priceNum} ${form.priceUnit}`
+      // 1. Upload all images directly to Cloudinary in parallel
+      let imageUrls: string[] = [];
+      if (images.length > 0) {
+        const total = images.length;
+        let done = 0;
 
-      const fd = new FormData()
-      fd.append('title', form.title)
-      fd.append('category', form.category)
-      fd.append('price', priceDisplay)
-      fd.append('priceValue', String(priceNum))
-      fd.append('area', `${areaNum} Sq.Ft`)
-      fd.append('areaValue', String(areaNum))
-      fd.append('type', form.propertyType)
-      fd.append('bedrooms', form.bedrooms || '0')
-      fd.append('bathrooms', form.bathrooms || '0')
-      fd.append('furnishing', form.furnishing)
-      fd.append('availableFor', JSON.stringify(form.availableFor))
-      fd.append('amenities', JSON.stringify(form.amenities))
-      fd.append('location', `${form.locality}, ${form.city}`)
-      fd.append('city', form.city)
-      fd.append('description', form.description)
-      fd.append('availability', form.availability || 'Ready to Move')
-      if (showProjectInfo) {
-        fd.append('builderName', form.builderName)
-        fd.append('projectStatus', form.projectStatus)
-        fd.append('reraNumber', form.reraNumber)
-        fd.append('launchDate', form.launchDate)
+        imageUrls = await Promise.all(
+          images.map(async (file) => {
+            const url = await uploadToCloudinary(file);
+            done++;
+            setUploadProgress(Math.round((done / total) * 100));
+            return url;
+          })
+        );
       }
-      images.forEach(file => fd.append('images', file))
 
-      await createPropertyApi(fd)
-      setForm(initialForm)
-      setImages([])
-      setPreviews([])
-      setErrors({})
-      toast.success('Property listed successfully!')
-      window.scrollTo(0,0)
+      // 2. Build plain JSON payload — no FormData, no file bytes
+      const priceNum = Number(form.price);
+      const areaNum  = Number(form.area);
+
+      const priceDisplay =
+        form.priceUnit === '₹/mo'     ? `${priceNum}/mo`
+        : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
+        : `${priceNum} ${form.priceUnit}`;
+
+      const payload = {
+        title:        form.title,
+        category:     form.category,
+        price:        priceDisplay,
+        priceValue:   priceNum,
+        area:         `${areaNum} Sq.Ft`,
+        areaValue:    areaNum,
+        type:         form.propertyType,
+        bedrooms:     form.bedrooms || '0',
+        bathrooms:    form.bathrooms || '0',
+        furnishing:   form.furnishing,
+        availableFor: form.availableFor,
+        amenities:    form.amenities,
+        location:     `${form.locality}, ${form.city}`,
+        city:         form.city,
+        description:  form.description,
+        availability: form.availability || 'Ready to Move',
+        images:       imageUrls,          // ← Cloudinary URLs, not File objects
+        ...(showProjectInfo && {
+          builderName:   form.builderName,
+          projectStatus: form.projectStatus,
+          reraNumber:    form.reraNumber,
+          launchDate:    form.launchDate,
+        }),
+      };
+
+      // 3. POST JSON to your backend — backend stores URLs, never sees files
+      await createPropertyApi(payload);
+
+      setForm(initialForm);
+      setImages([]);
+      setPreviews([]);
+      setErrors({});
+      setUploadProgress(0);
+      toast.success('Property listed successfully!');
+      window.scrollTo(0, 0);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to post property')
+      toast.error(err.response?.data?.message || 'Failed to post property');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   // ─── Auth Guard ─────────────────────────────────────────────────────────────
   if (!user) {
@@ -758,15 +842,43 @@ const AddProperty = () => {
           </div>
 
           {/* ── Submit ── */}
-          <div className="flex justify-end pb-10">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-10 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
-            >
-              {submitting ? 'Posting...' : 'Post Property Free'}
-            </button>
-          </div>
+            {/* <div className="flex justify-end pb-10">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-10 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
+              >
+                {submitting ? 'Posting...' : 'Post Property Free'}
+              </button>
+            </div> */}
+            {/* ── Submit ── */}
+            <div className="flex flex-col items-end gap-3 pb-10">
+              {submitting && uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="w-full max-w-xs">
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Uploading images…</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div
+                      className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-10 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
+              >
+                {submitting
+                  ? uploadProgress < 100
+                    ? `Uploading ${uploadProgress}%…`
+                    : 'Posting…'
+                  : 'Post Property Free'}
+              </button>
+            </div>
 
         </form>
       </div>

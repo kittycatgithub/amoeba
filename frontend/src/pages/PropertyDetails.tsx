@@ -131,7 +131,7 @@ const PropertyDetails: React.FC = () => {
         onClick={handleImageGalleryClick}
       >
         <img
-          src={`${import.meta.env.VITE_API_URL}${galleryImages[0]}?w=1200&auto=format&fit=crop&q=80`}
+          src={galleryImages[0]}
           alt={property.title}
           className="w-full h-full object-cover"
         />
@@ -296,7 +296,8 @@ const PropertyDetails: React.FC = () => {
               { icon: <TbBed />, label: "Bedrooms", value: property.bedrooms > 0 ? `${property.bedrooms} BHK` : 'N/A' },
               { icon: <PiBathtub />, label: "Bathrooms", value: property.bathrooms > 0 ? `${property.bathrooms}` : 'N/A' },
               // { icon: <FaRulerCombined />, label: "Area", value: `${property.area} sqft` },
-              { icon: <TfiRulerAlt2 />, label: "Area", value: `${property.area} sqft` },
+              // { icon: <TfiRulerAlt2 />, label: "Area", value: `${property.area} sqft` },
+              { icon: <TfiRulerAlt2 />, label: "Area", value: `${property.area}` },
               { icon: <LiaHomeSolid />, label: "Furnishing", value: property.furnishing },
             ].map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">

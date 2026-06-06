@@ -30,8 +30,12 @@ export const createProperty = async (req, res) => {
       postedBy: req.user.role,
       updatedBy: req.user._id,  // same as owner on first create
       owner: req.user._id,
-      availableFor: availableFor ? JSON.parse(availableFor) : [],
-      amenities: amenities ? JSON.parse(amenities) : [],
+      // availableFor: availableFor ? JSON.parse(availableFor) : [],
+      // amenities: amenities ? JSON.parse(amenities) : [],
+
+      // ✅ new (JSON body — values are already arrays)
+      availableFor: Array.isArray(availableFor) ? availableFor : [],
+      amenities: Array.isArray(amenities) ? amenities : [],
       images: Array.isArray(images) ? images : [],  // Cloudinary https:// URLs
       location,
       city,
@@ -191,8 +195,13 @@ export const updateProperty = async (req, res) => {
     if (bedrooms !== undefined) property.bedrooms = Number(bedrooms);
     if (bathrooms !== undefined) property.bathrooms = Number(bathrooms);
     if (furnishing !== undefined) property.furnishing = furnishing;
-    if (availableFor !== undefined) property.availableFor = JSON.parse(availableFor);
-    if (amenities !== undefined) property.amenities = JSON.parse(amenities);
+    // if (availableFor !== undefined) property.availableFor = JSON.parse(availableFor);
+    // if (amenities !== undefined) property.amenities = JSON.parse(amenities);
+
+    // ✅ new
+    if (availableFor !== undefined) property.availableFor = Array.isArray(availableFor) ? availableFor : [];
+    if (amenities !== undefined) property.amenities = Array.isArray(amenities) ? amenities : [];
+
     if (location !== undefined) property.location = location;
     if (city !== undefined) property.city = city;
     if (description !== undefined) property.description = description;

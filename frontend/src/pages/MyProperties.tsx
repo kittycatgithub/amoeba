@@ -165,8 +165,8 @@ const MyProperties = () => {
             <div className="flex items-center mb-4 md:mb-0 lg:flex-1">
               <div className="bg-primary/10 p-1 rounded-lg">
                 <img
-                  // src={property.images?.[0] || "https://via.placeholder.com/100"}
-                  src={`${import.meta.env.VITE_API_URL}${property.images?.[0]}` || "https://via.placeholder.com/100"}
+                  // src={`${import.meta.env.VITE_API_URL}${property.images?.[0]}` || "https://via.placeholder.com/100"}
+                  src={property.images[0]}
                   alt={property.title}
                   className="w-16 h-16 object-cover rounded"
                 />

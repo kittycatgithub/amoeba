@@ -83,7 +83,8 @@ const PropertyCard = ({ property }: Props) => {
             {slides.map((img, i) => (
               <img
                 key={i}
-                src={`${import.meta.env.VITE_API_URL}${img}?w=600&auto=format&fit=crop&q=60`}
+                // src={`${import.meta.env.VITE_API_URL}${img}?w=600&auto=format&fit=crop&q=60`}
+                src={img}
                 className="w-full h-48 object-cover flex-shrink-0"
               />
             ))}

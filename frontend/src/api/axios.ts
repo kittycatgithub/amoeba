@@ -13,12 +13,13 @@ const api = axios.create({
 // Handle 401 — redirect to login (no token to clear)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      window.location.href = '/login';   // optional: redirect on session expiry
-    }
-    return Promise.reject(error);
-  }
+  // (error) => {
+  //   if (error.response?.status === 401) {
+  //     // window.location.href = '/login';   // optional: redirect on session expiry
+  //     window.location.href = '/';   // optional: redirect on session expiry
+  //   }
+  //   return Promise.reject(error);
+  // }
 );
 
 export default api;

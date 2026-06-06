@@ -23,10 +23,12 @@ const ImageDrawer = memo<ImageDrawerProps>(({ isOpen, images, onClose }) => {
       ),
     [images]
   );
+  console.log(availableCategories, 'availableCategories')
 
   // Filter images by selected category (memoized)
   const filteredImages = useMemo(
-    () => images.filter((img) => img.category === selectedCategory),
+    // () => images.filter((img) => img.category === selectedCategory),
+    () => images.filter((img) => img),
     [images, selectedCategory]
   );
 
@@ -79,7 +81,7 @@ const ImageDrawer = memo<ImageDrawerProps>(({ isOpen, images, onClose }) => {
           </div>
 
           {/* CATEGORY TABS */}
-          <div className="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar border-b border-gray-100">
+          {/* <div className="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar border-b border-gray-100">
             {availableCategories.map((category) => {
               const categoryImages = images.filter(
                 (img) => img.category === category
@@ -98,7 +100,7 @@ const ImageDrawer = memo<ImageDrawerProps>(({ isOpen, images, onClose }) => {
                 </button>
               );
             })}
-          </div>
+          </div> */}
         </div>
 
         {/* IMAGES GRID */}
@@ -112,8 +114,8 @@ const ImageDrawer = memo<ImageDrawerProps>(({ isOpen, images, onClose }) => {
                   className="group relative aspect-square rounded-lg overflow-hidden bg-gray-200 hover:shadow-lg transition-shadow"
                 >
                   <img
-                    // src={image.url}
-                    src={`${import.meta.env.VITE_API_URL}${image.url}`}
+                    src={image.url}
+                    // src={`${import.meta.env.VITE_API_URL}${image.url}`}
                     alt={`${selectedCategory}-image`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"

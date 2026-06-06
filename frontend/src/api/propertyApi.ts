@@ -55,7 +55,8 @@ export const getMyPropertiesApi = () =>
 
 // createProperty now sends plain JSON
 export const createPropertyApi = async (payload: Record<string, any>) => {
-  const { data } = await api.post('/api/properties/create', payload, {
+  // const { data } = await api.post('/api/properties/create', payload, {
+  const { data } = await api.post('/api/properties', payload, {
     headers: { 'Content-Type': 'application/json' },
     withCredentials: true,
   });

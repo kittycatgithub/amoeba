@@ -14,7 +14,8 @@ export const fetchWishlist = createAsyncThunk(
   'wishlist/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/users/wishlist`);
+      // const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/users/wishlist`);
+      const { data } = await api.get(`/api/users/wishlist`);
       return data.wishlist as string[];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message ?? 'Failed to fetch wishlist');
@@ -26,7 +27,8 @@ export const addToWishlist = createAsyncThunk(
   'wishlist/add',
   async (propertyId: string, { rejectWithValue }) => {
     try {
-      await api.post(`${import.meta.env.VITE_API_URL}/api/users/wishlist/${propertyId}`);
+      // await api.post(`${import.meta.env.VITE_API_URL}/api/users/wishlist/${propertyId}`);
+      await api.post(`/api/users/wishlist/${propertyId}`);
       toast.success('Property added to wishlist')
       return propertyId;
     } catch (error: any) {
@@ -40,7 +42,8 @@ export const removeFromWishlist = createAsyncThunk(
   async (propertyId: string, { rejectWithValue }) => {
     
     try {
-      await api.delete(`${import.meta.env.VITE_API_URL}/api/users/wishlist/${propertyId}`);
+      // await api.delete(`${import.meta.env.VITE_API_URL}/api/users/wishlist/${propertyId}`);
+      await api.delete(`/api/users/wishlist/${propertyId}`);
       toast.success('Property removed from wishlist')
       return propertyId;
     } catch (error: any) {

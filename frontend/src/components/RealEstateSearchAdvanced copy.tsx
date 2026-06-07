@@ -25,29 +25,171 @@ const CITIES = [
 
 const POPULAR_CITIES = ["Mumbai","Delhi","Bangalore","Pune","Hyderabad","Chennai","Nagpur","Noida"];
 
-const PROPERTY_TYPES = [
-  { label: "Apartment",    icon: MdApartment,  value: "Residential Apartment" },
-  { label: "Villa",        icon: MdVilla,       value: "Independent House/Villa" },
-  { label: "Builder Floor",icon: FaBuilding,   value: "Builder Floor" },
-  { label: "Plot/Land",   icon: FaSquare,      value: "Residential Land" },
-  { label: "Studio/1RK",  icon: FaHome,        value: "1 RK/ Studio Apartment" },
-  { label: "Commercial",  icon: FaBuilding,    value: "Commercial" },
-];
+// Property types per category
+const PROPERTY_TYPES_MAP: Record<string, { label: string; icon: React.ElementType; value: string }[]> = {
+  Buy: [
+    { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
+    { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
+    { label: "Builder Floor", icon: FaBuilding,  value: "Builder Floor" },
+    { label: "Plot/Land",     icon: FaSquare,    value: "Residential Land" },
+    { label: "Studio/1RK",   icon: FaHome,       value: "1 RK/ Studio Apartment" },
+  ],
+  Rent: [
+    { label: "Studio/1RK",   icon: FaHome,       value: "1 RK/ Studio Apartment" },
+    { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
+    { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
+    { label: "Builder Floor", icon: FaBuilding,  value: "Builder Floor" },
+    { label: "PG",    icon: FaBuilding,   value: "PG" },
+    { label: "Hostel",    icon: FaBuilding,   value: "Hostel" },
+    { label: "Co-living",    icon: FaBuilding,   value: "Co-living" },
+  ],
+  Commercial: [
+    { label: "Office Space",   icon: FaBuilding,  value: "Office Space" },
+    { label: "Shop/Showroom", icon: FaBuilding,  value: "Shop/Showroom" },
+    { label: "Warehouse",     icon: FaBuilding,  value: "Warehouse/Godown" },
+    { label: "Industrial",    icon: FaBuilding,  value: "Industrial Building" },
+    { label: "Commercial Land",icon: FaSquare,   value: "Commercial Land" },
+  ],
+  "Plots/Land": [
+    { label: "Residential Plot", icon: FaSquare, value: "Residential Land" },
+    { label: "Commercial Plot",  icon: FaSquare, value: "Commercial Land" },
+    { label: "Agricultural",     icon: FaSquare, value: "Agricultural Land" },
+    { label: "Industrial Plot",  icon: FaSquare, value: "Industrial Land" },
+  ],
+  // Projects: [
+  //   { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
+  //   { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
+  //   { label: "Plotted Dev.",  icon: FaSquare,    value: "Plotted Development" },
+  //   { label: "Commercial",   icon: FaBuilding,   value: "Commercial" },
+  // ],
+  // "New Launch": [
+  //   { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
+  //   { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
+  //   { label: "Plotted Dev.",  icon: FaSquare,    value: "Plotted Development" },
+  //   { label: "Commercial",   icon: FaBuilding,   value: "Commercial" },
+  // ],
+};
 
 const BHK_OPTIONS = [
-  { label: "Single Room", value: 0 },
-  { label: "1 RK", value: 1 },
-  { label: "1 BHK", value: 2 },
-  { label: "2 BHK", value: 3 },
-  { label: "3 BHK", value: 4 },
-  { label: "4+ BHK", value: 5 },
+  { label: "Single Room",  value: 1 },
+  { label: "1 RK",  value: 2 },
+  { label: "1 BHK", value: 3 },
+  { label: "2 BHK", value: 4 },
+  { label: "3 BHK", value: 5 },
+  { label: "4+ BHK",value: 6 },
 ];
 
-const AVAILABILITIES  = ["Ready to Move","Within 6 Months","Within 1 Year","More Than 1 Year"];
-const FURNISHING_OPTS = ["Furnished","Semi-Furnished","Unfurnished"];
-const POSTED_BY_OPTS  = ["Owner","Agent","Builder","Company","Dealer"];
-const AVAILABLE_FOR   = ["Family","Bachelor","Company"];
-const BATHROOM_OPTS   = [1, 2, 3, 4];
+const AVAILABILITIES   = ["Ready to Move","Within 6 Months","Within 1 Year","More Than 1 Year"];
+const FURNISHING_OPTS  = ["Furnished","Semi-Furnished","Unfurnished"];
+const POSTED_BY_OPTS   = ["Owner","Agent","Builder","Company","Dealer"];
+const AVAILABLE_FOR    = ["Family","Bachelor","Company"];
+const BATHROOM_OPTS    = [1, 2, 3, 4];
+const POSSESSION_YEARS = ["2024","2025","2026","2027","2028","2029+"];
+const AMENITIES_OPTS   = ["Gym","Swimming Pool","Clubhouse","Park","Security","Power Backup","Lift","Parking"];
+
+// ─── Filter visibility config per category ───────────────────────────────────
+
+interface FilterVisibility {
+  propertyType:  boolean;
+  bhk:           boolean;
+  budget:        boolean;
+  area:          boolean;
+  possession:    boolean;
+  furnishing:    boolean;
+  availableFor:  boolean;
+  postedBy:      boolean;
+  builder:       boolean;
+  amenities:     boolean;
+  bathrooms:     boolean;
+  possessionYear:boolean;
+}
+
+const FILTER_VISIBILITY: Record<string, FilterVisibility> = {
+  Buy: {
+    propertyType:   true,
+    bhk:            true,
+    budget:         true,
+    area:           true,
+    possession:     true,
+    furnishing:     true,
+    availableFor:   false,
+    postedBy:       true,
+    builder:        false,
+    amenities:      true,
+    bathrooms:      true,
+    possessionYear: false,
+  },
+  Rent: {
+    propertyType:   true,
+    bhk:            true,
+    budget:         true,
+    area:           true,
+    possession:     false,
+    furnishing:     true,
+    availableFor:   true,
+    postedBy:       true,
+    builder:        false,
+    amenities:      true,
+    bathrooms:      true,
+    possessionYear: false,
+  },
+  Commercial: {
+    propertyType:   true,
+    bhk:            false,
+    budget:         true,
+    area:           true,
+    possession:     true,
+    furnishing:     true,
+    availableFor:   false,
+    postedBy:       true,
+    builder:        false,
+    amenities:      false,
+    bathrooms:      false,
+    possessionYear: false,
+  },
+  "Plots/Land": {
+    propertyType:   true,
+    bhk:            false,
+    budget:         true,
+    area:           true,
+    possession:     false,
+    furnishing:     false,
+    availableFor:   false,
+    postedBy:       true,
+    builder:        false,
+    amenities:      false,
+    bathrooms:      false,
+    possessionYear: false,
+  },
+  Projects: {
+    propertyType:   true,
+    bhk:            true,
+    budget:         true,
+    area:           true,
+    possession:     true,
+    furnishing:     false,
+    availableFor:   false,
+    postedBy:       false,
+    builder:        true,
+    amenities:      true,
+    bathrooms:      false,
+    possessionYear: true,
+  },
+  "New Launch": {
+    propertyType:   true,
+    bhk:            true,
+    budget:         true,
+    area:           true,
+    possession:     true,
+    furnishing:     false,
+    availableFor:   false,
+    postedBy:       false,
+    builder:        true,
+    amenities:      true,
+    bathrooms:      false,
+    possessionYear: true,
+  },
+};
 
 // ─── Budget ───────────────────────────────────────────────────────────────────
 
@@ -75,7 +217,6 @@ const AREA_UNIT_LABELS: Record<AreaUnit, string> = {
   gaj:   "Gaj",
 };
 
-// Steps are stored in Sq.Ft; conversion applied for display only
 const AREA_STEPS_SQFT = [
   0, 300, 500, 750, 1000, 1200, 1500, 2000, 2500, 3000,
   4000, 5000, 7500, 10000, 15000, 20000, 50000,
@@ -163,14 +304,14 @@ function CheckRow({ label, checked, onChange }: CheckRowProps) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function RealEstateSearchAdvanced() {
-  const dispatch   = useAppDispatch();
-  const navigate   = useNavigate();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   // tabs & basic search
-  const [activeTab,   setActiveTab]   = useState("Buy");
-  const [cityLocal,   setCityLocal]   = useState("");
-  const [query,       setQuery]       = useState("");
-  const [showMore,    setShowMore]    = useState(false);
+  const [activeTab, setActiveTab] = useState("Buy");
+  const [cityLocal, setCityLocal] = useState("");
+  const [query,     setQuery]     = useState("");
+  const [showMore,  setShowMore]  = useState(false);
 
   // dropdown open states
   const [openDD, setOpenDD] = useState<"city"|"type"|"budget"|"area"|null>(null);
@@ -183,6 +324,9 @@ export default function RealEstateSearchAdvanced() {
   const [selectedPostedBy,     setSelectedPostedBy]     = useState<string[]>([]);
   const [selectedBathrooms,    setSelectedBathrooms]    = useState<number[]>([]);
   const [selectedAvailFor,     setSelectedAvailFor]     = useState<string[]>([]);
+  const [selectedAmenities,    setSelectedAmenities]    = useState<string[]>([]);
+  const [selectedPossYears,    setSelectedPossYears]    = useState<string[]>([]);
+  const [builderQuery,         setBuilderQuery]         = useState("");
 
   // budget slider
   const [budgetMinIdx, setBudgetMinIdx] = useState(0);
@@ -204,8 +348,28 @@ export default function RealEstateSearchAdvanced() {
   useOutsideClick(budgetRef, () => { if (openDD === "budget") setOpenDD(null); });
   useOutsideClick(areaRef,   () => { if (openDD === "area")   setOpenDD(null); });
 
+  // ── Reset category-specific filters on tab change ──────────────────────────
+  useEffect(() => {
+    setSelectedTypes([]);
+    setSelectedBHK([]);
+    setSelectedAvailability([]);
+    setSelectedFurnishing([]);
+    setSelectedPostedBy([]);
+    setSelectedBathrooms([]);
+    setSelectedAvailFor([]);
+    setSelectedAmenities([]);
+    setSelectedPossYears([]);
+    setBuilderQuery("");
+    setShowMore(false);
+    setOpenDD(null);
+    // Intentionally keep: city, budget, area — users expect those to persist
+  }, [activeTab]);
+
   const toggle = <T,>(arr: T[], val: T): T[] =>
     arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
+
+  const vis = FILTER_VISIBILITY[activeTab] ?? FILTER_VISIBILITY["Buy"];
+  const currentPropertyTypes = PROPERTY_TYPES_MAP[activeTab] ?? PROPERTY_TYPES_MAP["Buy"];
 
   const budgetActive = budgetMinIdx > 0 || budgetMaxIdx < BUDGET_STEPS.length - 1;
   const areaActive   = areaMinIdx  > 0 || areaMaxIdx  < AREA_STEPS_SQFT.length - 1;
@@ -217,6 +381,11 @@ export default function RealEstateSearchAdvanced() {
   const areaLabel = areaActive
     ? `${formatArea(AREA_STEPS_SQFT[areaMinIdx], areaUnit)} – ${formatArea(AREA_STEPS_SQFT[areaMaxIdx], areaUnit, true)}`
     : "Area";
+
+  // Budget label changes for Rent tab
+  const budgetPillLabel = activeTab === "Rent"
+    ? (budgetActive ? budgetLabel : "Rent range")
+    : budgetLabel;
 
   function handleSearch() {
     dispatch(resetFilters());
@@ -231,6 +400,7 @@ export default function RealEstateSearchAdvanced() {
     selectedBHK.forEach(b => dispatch(toggleBedroom(b)));
     selectedAvailability.forEach(a => dispatch(toggleAvailability(a)));
     navigate("/property-search");
+    window.scrollTo(0,0)
   }
 
   function goToCity(c: string) {
@@ -238,6 +408,21 @@ export default function RealEstateSearchAdvanced() {
     dispatch(setCity(c));
     navigate("/property-search");
   }
+
+  // ── Budget quick presets differ by tab ─────────────────────────────────────
+  const budgetPresets = activeTab === "Rent"
+    ? [
+        { label: "Under 10K",   min: 0, max: 1 },
+        { label: "10K – 25K",  min: 1, max: 3 },
+        { label: "25K – 50K",  min: 3, max: 5 },
+        { label: "50K+",       min: 5, max: BUDGET_STEPS.length - 1 },
+      ]
+    : [
+        { label: "Under 50 L", min: 0, max: 9 },
+        { label: "50 L – 1 Cr",min: 9, max: 10 },
+        { label: "1–2 Cr",     min: 10, max: 12 },
+        { label: "2 Cr+",      min: 12, max: BUDGET_STEPS.length - 1 },
+      ];
 
   return (
     <section
@@ -298,8 +483,8 @@ export default function RealEstateSearchAdvanced() {
               </button>
 
               {openDD === "city" && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-4 pt-3 pb-1">
+                <div className="absolute z-50 top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl">
+                  {/* <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-4 pt-3 pb-1">
                     Popular cities
                   </p>
                   <div className="flex flex-wrap gap-2 px-4 pb-3">
@@ -315,12 +500,12 @@ export default function RealEstateSearchAdvanced() {
                         {c}
                       </button>
                     ))}
-                  </div>
+                  </div> */}
                   <div className="border-t border-gray-100">
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-4 pt-2 pb-1">
                       All cities
                     </p>
-                    <div className="max-h-40 overflow-y-auto">
+                    <div className="max-h-62 overflow-y-auto">
                       {CITIES.map(c => (
                         <button
                           key={c}
@@ -345,7 +530,11 @@ export default function RealEstateSearchAdvanced() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
-                placeholder="Locality, project or builder"
+                placeholder={
+                  activeTab === "Projects" || activeTab === "New Launch"
+                    ? "Project name, builder or locality"
+                    : "Locality, project or builder"
+                }
                 className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
               />
               {query && (
@@ -368,31 +557,32 @@ export default function RealEstateSearchAdvanced() {
           {/* ── Row 2: Quick filters ── */}
           <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-100">
 
-            {/* Property type */}
-            <div ref={typeRef} className="relative">
-              <Pill
-                label="Property type"
-                active={openDD === "type" || selectedTypes.length > 0}
-                count={selectedTypes.length || undefined}
-                onClick={() => setOpenDD(openDD === "type" ? null : "type")}
-              />
-              {openDD === "type" && (
-                <div className="absolute z-50 top-full left-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-xl py-2">
-                  {/* {PROPERTY_TYPES.map(({ label, icon: Icon, value }) => ( */}
-                  {PROPERTY_TYPES.map(({ label, value }) => (
-                    <CheckRow
-                      key={value}
-                      label={label}
-                      checked={selectedTypes.includes(value)}
-                      onChange={() => setSelectedTypes(prev => toggle(prev, value))}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Property type — shown for all tabs */}
+            {vis.propertyType && (
+              <div ref={typeRef} className="relative ">
+                <Pill
+                  label="Property type"
+                  active={openDD === "type" || selectedTypes.length > 0}
+                  count={selectedTypes.length || undefined}
+                  onClick={() => setOpenDD(openDD === "type" ? null : "type")}
+                />
+                {openDD === "type" && (
+                  <div className="absolute z-50 top-full left-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-xl py-2 md:max-h-46 overflow-auto">
+                    {currentPropertyTypes.map(({ label, value }) => (
+                      <CheckRow
+                        key={value}
+                        label={label}
+                        checked={selectedTypes.includes(value)}
+                        onChange={() => setSelectedTypes(prev => toggle(prev, value))}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* BHK chips */}
-            {BHK_OPTIONS.map(opt => (
+            {/* BHK chips — Buy, Rent, Projects, New Launch only */}
+            {vis.bhk && BHK_OPTIONS.map(opt => (
               <button
                 key={opt.label}
                 onClick={() => setSelectedBHK(prev => toggle(prev, opt.value))}
@@ -406,230 +596,313 @@ export default function RealEstateSearchAdvanced() {
             ))}
 
             {/* Budget */}
-            <div ref={budgetRef} className="relative">
-              <Pill
-                label={budgetLabel}
-                active={openDD === "budget" || budgetActive}
-                onClick={() => setOpenDD(openDD === "budget" ? null : "budget")}
-              />
-              {openDD === "budget" && (
-                <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-5">
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-4">
-                    Price range
-                  </p>
-                  <DualRangeSlider
-                    steps={BUDGET_STEPS}
-                    minIdx={budgetMinIdx}
-                    maxIdx={budgetMaxIdx}
-                    onMinChange={setBudgetMinIdx}
-                    onMaxChange={setBudgetMaxIdx}
-                    formatLabel={(v, isMax) => formatBudget(v, isMax)}
-                  />
-                  {/* Quick presets */}
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {[
-                      { label: "Under 50 L", min: 0, max: 9 },
-                      { label: "50 L – 1 Cr", min: 9, max: 10 },
-                      { label: "1–2 Cr", min: 10, max: 12 },
-                      { label: "2 Cr+", min: 12, max: BUDGET_STEPS.length - 1 },
-                    ].map(p => (
-                      <button
-                        key={p.label}
-                        onClick={() => { setBudgetMinIdx(p.min); setBudgetMaxIdx(p.max); }}
-                        className="px-3 py-1 rounded-full border border-gray-200 text-xs text-gray-600 hover:border-blue-400 hover:text-blue-600 transition"
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                  {budgetActive && (
-                    <button
-                      onClick={() => { setBudgetMinIdx(0); setBudgetMaxIdx(BUDGET_STEPS.length - 1); }}
-                      className="mt-3 text-xs text-red-500 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Area */}
-            <div ref={areaRef} className="relative">
-              <Pill
-                label={areaLabel}
-                active={openDD === "area" || areaActive}
-                onClick={() => setOpenDD(openDD === "area" ? null : "area")}
-              />
-              {openDD === "area" && (
-                <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-5">
-                  {/* Unit selector */}
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Area range</p>
-                    <div className="flex gap-1">
-                      {(Object.keys(AREA_UNIT_LABELS) as AreaUnit[]).map(u => (
+            {vis.budget && (
+              <div ref={budgetRef} className="relative">
+                <Pill
+                  label={budgetPillLabel}
+                  active={openDD === "budget" || budgetActive}
+                  onClick={() => setOpenDD(openDD === "budget" ? null : "budget")}
+                />
+                {openDD === "budget" && (
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-5">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-4">
+                      {activeTab === "Rent" ? "Monthly rent range" : "Price range"}
+                    </p>
+                    <DualRangeSlider
+                      steps={BUDGET_STEPS}
+                      minIdx={budgetMinIdx}
+                      maxIdx={budgetMaxIdx}
+                      onMinChange={setBudgetMinIdx}
+                      onMaxChange={setBudgetMaxIdx}
+                      formatLabel={(v, isMax) => formatBudget(v, isMax)}
+                    />
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {budgetPresets.map(p => (
                         <button
-                          key={u}
-                          onClick={() => setAreaUnit(u)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-150
-                            ${areaUnit === u
-                              ? "bg-blue-600 text-white"
-                              : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                          key={p.label}
+                          onClick={() => { setBudgetMinIdx(p.min); setBudgetMaxIdx(p.max); }}
+                          className="px-3 py-1 rounded-full border border-gray-200 text-xs text-gray-600 hover:border-blue-400 hover:text-blue-600 transition"
                         >
-                          {AREA_UNIT_LABELS[u]}
+                          {p.label}
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  <DualRangeSlider
-                    steps={AREA_STEPS_SQFT}
-                    minIdx={areaMinIdx}
-                    maxIdx={areaMaxIdx}
-                    onMinChange={setAreaMinIdx}
-                    onMaxChange={setAreaMaxIdx}
-                    formatLabel={(sqft, isMax) => formatArea(sqft, areaUnit, isMax)}
-                  />
-
-                  {/* Quick presets */}
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {[
-                      { label: "< 1000 sq.ft",  min: 0, max: 4  },
-                      { label: "1000–2000",       min: 4, max: 7  },
-                      { label: "2000–5000",       min: 7, max: 11 },
-                      { label: "5000+",           min: 11, max: AREA_STEPS_SQFT.length - 1 },
-                    ].map(p => (
+                    {budgetActive && (
                       <button
-                        key={p.label}
-                        onClick={() => { setAreaMinIdx(p.min); setAreaMaxIdx(p.max); }}
-                        className="px-3 py-1 rounded-full border border-gray-200 text-xs text-gray-600 hover:border-blue-400 hover:text-blue-600 transition"
+                        onClick={() => { setBudgetMinIdx(0); setBudgetMaxIdx(BUDGET_STEPS.length - 1); }}
+                        className="mt-3 text-xs text-red-500 hover:underline"
                       >
-                        {p.label}
+                        Clear
                       </button>
-                    ))}
+                    )}
                   </div>
-                  {areaActive && (
-                    <button
-                      onClick={() => { setAreaMinIdx(0); setAreaMaxIdx(AREA_STEPS_SQFT.length - 1); }}
-                      className="mt-3 text-xs text-red-500 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
-            {/* More filters toggle */}
-            <button
-              onClick={() => setShowMore(v => !v)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm transition ml-auto
-                ${showMore
-                  ? "border-blue-600 text-blue-600 bg-blue-50"
-                  : "border-gray-300 text-gray-600 hover:border-blue-400"}`}
-            >
-              {showMore ? "− Less" : "+ More filters"}
-            </button>
+            {/* Area */}
+            {vis.area && (
+              <div ref={areaRef} className="relative">
+                <Pill
+                  label={areaLabel}
+                  active={openDD === "area" || areaActive}
+                  onClick={() => setOpenDD(openDD === "area" ? null : "area")}
+                />
+                {openDD === "area" && (
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Area range</p>
+                      <div className="flex gap-1">
+                        {(Object.keys(AREA_UNIT_LABELS) as AreaUnit[]).map(u => (
+                          <button
+                            key={u}
+                            onClick={() => setAreaUnit(u)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-150
+                              ${areaUnit === u
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                          >
+                            {AREA_UNIT_LABELS[u]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <DualRangeSlider
+                      steps={AREA_STEPS_SQFT}
+                      minIdx={areaMinIdx}
+                      maxIdx={areaMaxIdx}
+                      onMinChange={setAreaMinIdx}
+                      onMaxChange={setAreaMaxIdx}
+                      formatLabel={(sqft, isMax) => formatArea(sqft, areaUnit, isMax)}
+                    />
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {[
+                        { label: "< 1000 sq.ft", min: 0, max: 4  },
+                        { label: "1000–2000",     min: 4, max: 7  },
+                        { label: "2000–5000",     min: 7, max: 11 },
+                        { label: "5000+",         min: 11, max: AREA_STEPS_SQFT.length - 1 },
+                      ].map(p => (
+                        <button
+                          key={p.label}
+                          onClick={() => { setAreaMinIdx(p.min); setAreaMaxIdx(p.max); }}
+                          className="px-3 py-1 rounded-full border border-gray-200 text-xs text-gray-600 hover:border-blue-400 hover:text-blue-600 transition"
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                    {areaActive && (
+                      <button
+                        onClick={() => { setAreaMinIdx(0); setAreaMaxIdx(AREA_STEPS_SQFT.length - 1); }}
+                        className="mt-3 text-xs text-red-500 hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* More filters toggle — only show if there are more filters for this tab */}
+            {(vis.possession || vis.furnishing || vis.availableFor || vis.postedBy ||
+              vis.builder || vis.amenities || vis.bathrooms || vis.possessionYear) && (
+              <button
+                onClick={() => setShowMore(v => !v)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm transition ml-auto
+                  ${showMore
+                    ? "border-blue-600 text-blue-600 bg-blue-50"
+                    : "border-gray-300 text-gray-600 hover:border-blue-400"}`}
+              >
+                {showMore ? "− Less" : "+ More filters"}
+              </button>
+            )}
           </div>
 
           {/* ── More Filters Panel ── */}
           {showMore && (
             <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
 
-              {/* Possession status */}
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Possession status</p>
-                <div className="space-y-0.5">
-                  {AVAILABILITIES.map(a => (
-                    <CheckRow
-                      key={a} label={a}
-                      checked={selectedAvailability.includes(a)}
-                      onChange={() => setSelectedAvailability(prev => toggle(prev, a))}
+              {/* Possession status — Buy, Commercial, Projects, New Launch */}
+              {vis.possession && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Possession status
+                  </p>
+                  <div className="space-y-0.5">
+                    {AVAILABILITIES.map(a => (
+                      <CheckRow
+                        key={a} label={a}
+                        checked={selectedAvailability.includes(a)}
+                        onChange={() => setSelectedAvailability(prev => toggle(prev, a))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Possession year — Projects, New Launch */}
+              {vis.possessionYear && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Possession year
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {POSSESSION_YEARS.map(y => (
+                      <button
+                        key={y}
+                        onClick={() => setSelectedPossYears(prev => toggle(prev, y))}
+                        className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all duration-150
+                          ${selectedPossYears.includes(y)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "border-gray-300 text-gray-600 hover:border-blue-400 bg-white"}`}
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Builder search — Projects, New Launch */}
+              {vis.builder && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Builder / Developer
+                  </p>
+                  <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-blue-400 transition">
+                    <FaSearch className="text-gray-400 flex-shrink-0 text-xs" />
+                    <input
+                      type="text"
+                      value={builderQuery}
+                      onChange={e => setBuilderQuery(e.target.value)}
+                      placeholder="Search builder name..."
+                      className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
                     />
-                  ))}
+                    {builderQuery && (
+                      <button onClick={() => setBuilderQuery("")} className="text-gray-400 hover:text-gray-600">
+                        <IoClose className="text-xs" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Furnishing */}
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Furnishing</p>
-                <div className="space-y-0.5">
-                  {FURNISHING_OPTS.map(f => (
-                    <CheckRow
-                      key={f} label={f}
-                      checked={selectedFurnishing.includes(f)}
-                      onChange={() => setSelectedFurnishing(prev => toggle(prev, f))}
-                    />
-                  ))}
+              {/* Furnishing — Buy, Rent, Commercial */}
+              {vis.furnishing && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Furnishing</p>
+                  <div className="space-y-0.5">
+                    {FURNISHING_OPTS.map(f => (
+                      <CheckRow
+                        key={f} label={f}
+                        checked={selectedFurnishing.includes(f)}
+                        onChange={() => setSelectedFurnishing(prev => toggle(prev, f))}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Posted by */}
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Posted by</p>
-                <div className="space-y-0.5">
-                  {POSTED_BY_OPTS.map(p => (
-                    <CheckRow
-                      key={p} label={p}
-                      checked={selectedPostedBy.includes(p)}
-                      onChange={() => setSelectedPostedBy(prev => toggle(prev, p))}
-                    />
-                  ))}
+              {/* Available for — Rent only */}
+              {vis.availableFor && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Available for
+                  </p>
+                  <div className="space-y-0.5">
+                    {AVAILABLE_FOR.map(a => (
+                      <CheckRow
+                        key={a} label={a}
+                        checked={selectedAvailFor.includes(a)}
+                        onChange={() => setSelectedAvailFor(prev => toggle(prev, a))}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Bathrooms */}
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Bathrooms</p>
-                <div className="flex flex-wrap gap-2">
-                  {BATHROOM_OPTS.map(b => (
-                    <button
-                      key={b}
-                      onClick={() => setSelectedBathrooms(prev => toggle(prev, b))}
-                      className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all duration-150
-                        ${selectedBathrooms.includes(b)
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "border-gray-300 text-gray-600 hover:border-blue-400 bg-white"}`}
-                    >
-                      {b === 4 ? "4+" : b}
-                    </button>
-                  ))}
+              {/* Posted by — Buy, Rent, Commercial, Plots */}
+              {vis.postedBy && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Posted by</p>
+                  <div className="space-y-0.5">
+                    {POSTED_BY_OPTS.map(p => (
+                      <CheckRow
+                        key={p} label={p}
+                        checked={selectedPostedBy.includes(p)}
+                        onChange={() => setSelectedPostedBy(prev => toggle(prev, p))}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Available for */}
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Available for</p>
-                <div className="space-y-0.5">
-                  {AVAILABLE_FOR.map(a => (
-                    <CheckRow
-                      key={a} label={a}
-                      checked={selectedAvailFor.includes(a)}
-                      onChange={() => setSelectedAvailFor(prev => toggle(prev, a))}
-                    />
-                  ))}
+              {/* Bathrooms — Buy, Rent */}
+              {vis.bathrooms && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Bathrooms</p>
+                  <div className="flex flex-wrap gap-2">
+                    {BATHROOM_OPTS.map(b => (
+                      <button
+                        key={b}
+                        onClick={() => setSelectedBathrooms(prev => toggle(prev, b))}
+                        className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all duration-150
+                          ${selectedBathrooms.includes(b)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "border-gray-300 text-gray-600 hover:border-blue-400 bg-white"}`}
+                      >
+                        {b === 4 ? "4+" : b}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Property type icons */}
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Property type</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {PROPERTY_TYPES.slice(0, 4).map(({ label, icon: Icon, value }) => (
-                    <button
-                      key={value}
-                      onClick={() => setSelectedTypes(prev => toggle(prev, value))}
-                      className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl border text-xs transition-all duration-150
-                        ${selectedTypes.includes(value)
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "border-gray-200 text-gray-600 hover:border-blue-400 bg-white"}`}
-                    >
-                      <Icon className="text-base" />
-                      {label}
-                    </button>
-                  ))}
+              {/* Amenities — Buy, Rent, Projects, New Launch */}
+              {vis.amenities && (
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Amenities</p>
+                  <div className="flex flex-wrap gap-2">
+                    {AMENITIES_OPTS.map(a => (
+                      <button
+                        key={a}
+                        onClick={() => setSelectedAmenities(prev => toggle(prev, a))}
+                        className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-150
+                          ${selectedAmenities.includes(a)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "border-gray-300 text-gray-600 hover:border-blue-400 bg-white"}`}
+                      >
+                        {a}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Property type icon grid — shown in More panel for Buy/Rent */}
+              {vis.propertyType && (activeTab === "Buy" || activeTab === "Rent") && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Property type
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {currentPropertyTypes.slice(0, 4).map(({ label, icon: Icon, value }) => (
+                      <button
+                        key={value}
+                        onClick={() => setSelectedTypes(prev => toggle(prev, value))}
+                        className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl border text-xs transition-all duration-150
+                          ${selectedTypes.includes(value)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "border-gray-200 text-gray-600 hover:border-blue-400 bg-white"}`}
+                      >
+                        <Icon className="text-base" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
@@ -637,7 +910,8 @@ export default function RealEstateSearchAdvanced() {
       </div>
 
       {/* ── Popular cities ── */}
-      <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+      {/* <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3"> */}
+      <div className="relative mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         <span className="text-blue-300/70 text-sm">Popular cities:</span>
         {POPULAR_CITIES.map(c => (
           <button

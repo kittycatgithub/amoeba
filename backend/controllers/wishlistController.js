@@ -7,8 +7,19 @@ export const getWishlist = async (req, res) => {
       .populate('property')   // returns full property objects
       .sort({ createdAt: -1 });
 
+    // Separate valid vs orphaned (deleted property)
+    const valid = items.filter(item => item.property != null);
+    const orphaned = items.filter(item => item.property == null);
+
+    // Clean up stale wishlist entries in the background
+    if (orphaned.length > 0) {
+      const orphanedIds = orphaned.map(item => item._id);
+      Wishlist.deleteMany({ _id: { $in: orphanedIds } }).catch(console.error);
+    }
+
     // Frontend slice expects an array of property ID strings
-    const wishlist = items.map(item => item.property._id.toString());
+    // const wishlist = items.map(item => item.property._id.toString());
+    const wishlist = valid.map(item => item.property._id.toString());
 
     res.json({ wishlist });
   } catch (err) {

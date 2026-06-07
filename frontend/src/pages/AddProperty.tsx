@@ -5,6 +5,7 @@ import { useAppContext } from '../context/AppContext'
 import { createPropertyApi } from '../api/propertyApi'
 import { motion } from "framer-motion";
 import { uploadToCloudinary } from '../utils/uploadToCloudinary'
+import { AVAILABLE_FOR_OPTIONS } from '../assets/assets'
 
 const CITIES = [
   'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai', 'Kolkata',
@@ -20,7 +21,7 @@ const PROPERTY_TYPES_MAP: Record<string, string[]> = {
   ],
   Rent: [
     'Residential Apartment', 'Independent House/Villa', 'Builder Floor',
-    '1 RK / Studio Apartment',
+    '1 RK / Studio Apartment', 'PG', 'Co-living'
   ],
   Commercial: [
     'Commercial Office', 'Commercial Shop', 'Commercial Showroom',
@@ -101,7 +102,6 @@ const initialForm: FormState = {
 const CATEGORIES = ['Buy', 'Rent', 'Commercial', 'Plots & Land', 'Projects', 'New Launch']
 const FURNISHING_OPTIONS = ['Furnished', 'Semi-Furnished', 'Unfurnished']
 const AVAILABILITY_OPTIONS = ['Ready to Move', 'Within 6 Months', 'Within 1 Year', 'More Than 1 Year']
-const AVAILABLE_FOR_OPTIONS = ['Family', 'Single Men', 'Single Women', 'Company Lease']
 const PROJECT_STATUS_OPTIONS = ['Pre-Launch', 'Under Construction', 'Ready to Move', 'Completed']
 
 // ─── Category behaviour helpers ──────────────────────────────────────────────

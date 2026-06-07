@@ -442,6 +442,15 @@ export const dummyProperties: Property[] = [
   },
 ];
 
+export const AMENITIES_LIST: string[] = [
+  'Parking', 'Lift', 'Power Backup', 'Swimming Pool', 'Gymnasium',
+  'Park / Garden', 'WiFi / Internet', 'AC', 'CCTV Security', 'Club House',
+  'Intercom', 'Fire Safety', 'Rainwater Harvesting', 'Visitor Parking',
+  'Gated Community', 'Bathroom'
+]
+
+export const AVAILABLE_FOR_OPTIONS: string[] = ['Family', 'Single Men', 'Single Women', 'Company Lease']
+
 export const footerLinks = [
   {
     title: "Quick Links",

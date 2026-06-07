@@ -1,4 +1,8 @@
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
+
+console.log('SMTP_HOST:', process.env.SMTP_HOST);
+console.log('SMTP_USER:', process.env.SMTP_USER);
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -17,6 +21,7 @@ const transporter = nodemailer.createTransport({
  * @param {string} html - HTML body
  */
 const sendEmail = async (to, subject, html) => {
+
   await transporter.sendMail({
     from: `"RealEstate App" <${process.env.SMTP_USER}>`,
     to,

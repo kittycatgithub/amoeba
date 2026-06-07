@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSearch, FaMapMarkerAlt, FaChevronDown, FaBuilding, FaHome, FaSquare } from "react-icons/fa";
+import { FaSearch, FaMapMarkerAlt, FaChevronDown, FaBuilding, FaSquare } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { MdApartment, MdVilla } from "react-icons/md";
 import { useAppDispatch } from "../store/hooks";
@@ -12,10 +12,12 @@ import {
   resetFilters,
 } from "../store/slices/filterSlice";
 import DualRangeSlider from "./DualRangeSlider";
+import { AMENITIES_LIST, AVAILABLE_FOR_OPTIONS } from "../assets/assets";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TABS = ["Buy", "Rent", "Commercial", "Plots/Land", "Projects", "New Launch"];
+// const TABS = ["Buy", "Rent", "Commercial Buy", "Commercial Rent", "Plots/Land", "Projects", "New Launch"];
+const TABS = ["Buy", "Rent", "Commercial Buy", "Commercial Rent", "Plots/Land"];
 
 const CITIES = [
   "All Cities","Mumbai","Delhi","Bangalore","Hyderabad","Chennai",
@@ -28,25 +30,35 @@ const POPULAR_CITIES = ["Mumbai","Delhi","Bangalore","Pune","Hyderabad","Chennai
 // Property types per category
 const PROPERTY_TYPES_MAP: Record<string, { label: string; icon: React.ElementType; value: string }[]> = {
   Buy: [
+    // { label: "Studio/1RK",   icon: FaHome,       value: "1 RK/ Studio Apartment" },
     { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
     { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
     { label: "Builder Floor", icon: FaBuilding,  value: "Builder Floor" },
-    { label: "Plot/Land",     icon: FaSquare,    value: "Residential Land" },
-    { label: "Studio/1RK",   icon: FaHome,       value: "1 RK/ Studio Apartment" },
+    { label: "1 RK / Studio Apartment", icon: FaBuilding,  value: "1 RK / Studio Apartment" },
+    // { label: "Plot/Land",     icon: FaSquare,    value: "Residential Land" },
   ],
   Rent: [
+    // { label: "Studio/1RK",   icon: FaHome,       value: "1 RK/ Studio Apartment" },
     { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
     { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
     { label: "Builder Floor", icon: FaBuilding,  value: "Builder Floor" },
-    { label: "Studio/1RK",   icon: FaHome,       value: "1 RK/ Studio Apartment" },
-    { label: "PG/Hostel",    icon: FaBuilding,   value: "PG/Co-living" },
+    { label: "PG",            icon: FaBuilding,  value: "PG" },
+    // { label: "Hostel",        icon: FaBuilding,  value: "Hostel" },
+    { label: "Co-living",     icon: FaBuilding,  value: "Co-living" },
   ],
-  Commercial: [
-    { label: "Office Space",   icon: FaBuilding,  value: "Office Space" },
-    { label: "Shop/Showroom", icon: FaBuilding,  value: "Shop/Showroom" },
-    { label: "Warehouse",     icon: FaBuilding,  value: "Warehouse/Godown" },
-    { label: "Industrial",    icon: FaBuilding,  value: "Industrial Building" },
-    { label: "Commercial Land",icon: FaSquare,   value: "Commercial Land" },
+  "Commercial Buy": [
+    { label: "Office Space",    icon: FaBuilding, value: "Office Space" },
+    { label: "Shop/Showroom",   icon: FaBuilding, value: "Shop/Showroom" },
+    { label: "Warehouse",       icon: FaBuilding, value: "Warehouse/Godown" },
+    { label: "Industrial",      icon: FaBuilding, value: "Industrial Building" },
+    { label: "Commercial Land", icon: FaSquare,   value: "Commercial Land" },
+  ],
+  "Commercial Rent": [
+    { label: "Office Space",    icon: FaBuilding, value: "Office Space" },
+    { label: "Shop/Showroom",   icon: FaBuilding, value: "Shop/Showroom" },
+    { label: "Warehouse",       icon: FaBuilding, value: "Warehouse/Godown" },
+    { label: "Industrial",      icon: FaBuilding, value: "Industrial Building" },
+    { label: "Commercial Land", icon: FaSquare,   value: "Commercial Land" },
   ],
   "Plots/Land": [
     { label: "Residential Plot", icon: FaSquare, value: "Residential Land" },
@@ -54,52 +66,50 @@ const PROPERTY_TYPES_MAP: Record<string, { label: string; icon: React.ElementTyp
     { label: "Agricultural",     icon: FaSquare, value: "Agricultural Land" },
     { label: "Industrial Plot",  icon: FaSquare, value: "Industrial Land" },
   ],
-  Projects: [
-    { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
-    { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
-    { label: "Plotted Dev.",  icon: FaSquare,    value: "Plotted Development" },
-    { label: "Commercial",   icon: FaBuilding,   value: "Commercial" },
-  ],
-  "New Launch": [
-    { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
-    { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
-    { label: "Plotted Dev.",  icon: FaSquare,    value: "Plotted Development" },
-    { label: "Commercial",   icon: FaBuilding,   value: "Commercial" },
-  ],
+  // Projects: [
+  //   { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
+  //   { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
+  //   { label: "Plotted Dev.",  icon: FaSquare,    value: "Plotted Development" },
+  //   { label: "Commercial",   icon: FaBuilding,   value: "Commercial" },
+  // ],
+  // "New Launch": [
+  //   { label: "Apartment",     icon: MdApartment, value: "Residential Apartment" },
+  //   { label: "Villa",         icon: MdVilla,      value: "Independent House/Villa" },
+  //   { label: "Plotted Dev.",  icon: FaSquare,    value: "Plotted Development" },
+  //   { label: "Commercial",   icon: FaBuilding,   value: "Commercial" },
+  // ],
 };
 
 const BHK_OPTIONS = [
-  { label: "Single Room",  value: 1 },
-  { label: "1 RK",  value: 2 },
-  { label: "1 BHK", value: 3 },
-  { label: "2 BHK", value: 4 },
-  { label: "3 BHK", value: 5 },
-  { label: "4+ BHK",value: 6 },
+  { label: "Single Room", value: 1 },
+  { label: "1 RK",        value: 2 },
+  { label: "1 BHK",       value: 3 },
+  { label: "2 BHK",       value: 4 },
+  { label: "3 BHK",       value: 5 },
+  { label: "4+ BHK",      value: 6 },
 ];
 
 const AVAILABILITIES   = ["Ready to Move","Within 6 Months","Within 1 Year","More Than 1 Year"];
 const FURNISHING_OPTS  = ["Furnished","Semi-Furnished","Unfurnished"];
 const POSTED_BY_OPTS   = ["Owner","Agent","Builder","Company","Dealer"];
-const AVAILABLE_FOR    = ["Family","Bachelor","Company"];
 const BATHROOM_OPTS    = [1, 2, 3, 4];
 const POSSESSION_YEARS = ["2024","2025","2026","2027","2028","2029+"];
-const AMENITIES_OPTS   = ["Gym","Swimming Pool","Clubhouse","Park","Security","Power Backup","Lift","Parking"];
 
 // ─── Filter visibility config per category ───────────────────────────────────
 
 interface FilterVisibility {
-  propertyType:  boolean;
-  bhk:           boolean;
-  budget:        boolean;
-  area:          boolean;
-  possession:    boolean;
-  furnishing:    boolean;
-  availableFor:  boolean;
-  postedBy:      boolean;
-  builder:       boolean;
-  amenities:     boolean;
-  bathrooms:     boolean;
-  possessionYear:boolean;
+  propertyType:   boolean;
+  bhk:            boolean;
+  budget:         boolean;
+  area:           boolean;
+  possession:     boolean;
+  furnishing:     boolean;
+  availableFor:   boolean;
+  postedBy:       boolean;
+  builder:        boolean;
+  amenities:      boolean;
+  bathrooms:      boolean;
+  possessionYear: boolean;
 }
 
 const FILTER_VISIBILITY: Record<string, FilterVisibility> = {
@@ -131,12 +141,26 @@ const FILTER_VISIBILITY: Record<string, FilterVisibility> = {
     bathrooms:      true,
     possessionYear: false,
   },
-  Commercial: {
+  "Commercial Buy": {
     propertyType:   true,
     bhk:            false,
     budget:         true,
     area:           true,
     possession:     true,
+    furnishing:     true,
+    availableFor:   false,
+    postedBy:       true,
+    builder:        false,
+    amenities:      false,
+    bathrooms:      false,
+    possessionYear: false,
+  },
+  "Commercial Rent": {
+    propertyType:   true,
+    bhk:            false,
+    budget:         true,
+    area:           true,
+    possession:     false,
     furnishing:     true,
     availableFor:   false,
     postedBy:       true,
@@ -189,18 +213,94 @@ const FILTER_VISIBILITY: Record<string, FilterVisibility> = {
   },
 };
 
-// ─── Budget ───────────────────────────────────────────────────────────────────
+// ─── Budget steps per category ────────────────────────────────────────────────
+//
+// Buy / Commercial Buy:
+//   0 (no min) → 5L, 10L, 15L … 2Cr → 0 sentinel (2 Cr+)
+//
+// Rent:
+//   0 (no min) → 3k, 5k, 7k … 1L → 0 sentinel (1 L+)
+//
+// Commercial Rent:
+//   0 (no min) → 5k, 10k, 15k … 1L → 0 sentinel (1 L+)
+//
+// Plots/Land:
+//   0 (no min) → 1L, 5L, 10L … 10Cr → 0 sentinel (10 Cr+)
+//
+// Projects / New Launch  →  kept commented / not finalized
 
-export const BUDGET_STEPS = [
-  0, 500000, 1000000, 1500000, 2000000, 2500000, 3000000, 4000000,
-  5000000, 7500000, 10000000, 15000000, 20000000, 30000000, 50000000, 100000000,
-];
+// Buy: under 5L … 2Cr, step 5L  (0 = no min; last real value = 20000000; sentinel = 0 for 2Cr+)
+const BUDGET_STEPS_BUY: number[] = (() => {
+  const steps = [0]; // no min
+  for (let v = 500000; v <= 20000000; v += 500000) steps.push(v);
+  steps.push(0); // sentinel → "2 Cr+"
+  return steps;
+})();
 
-export function formatBudget(val: number, isMax = false): string {
-  if (val === 0) return isMax ? "No max" : "No min";
+// Rent: under 3k … 1L, starts at 3k then 5k, 7k, 9k … 1L (step 2k)
+const BUDGET_STEPS_RENT: number[] = (() => {
+  const steps = [0, 3000]; // no min, then 3k
+  for (let v = 5000; v <= 100000; v += 2000) steps.push(v);
+  steps.push(0); // sentinel → "1 L+"
+  return steps;
+})();
+
+// Commercial Buy: same shape as Buy
+const BUDGET_STEPS_COMMERCIAL_BUY: number[] = BUDGET_STEPS_BUY;
+
+// Commercial Rent: under 5k … 1L, step 5k
+const BUDGET_STEPS_COMMERCIAL_RENT: number[] = (() => {
+  const steps = [0]; // no min
+  for (let v = 5000; v <= 100000; v += 5000) steps.push(v);
+  steps.push(0); // sentinel → "1 L+"
+  return steps;
+})();
+
+// Plots/Land: under 1L, then 1L … 10Cr, step 5L for first band then larger
+const BUDGET_STEPS_PLOTS: number[] = (() => {
+  const steps = [0, 100000]; // no min, then 1L
+  for (let v = 500000; v <= 100000000; v += 500000) steps.push(v);
+  steps.push(0); // sentinel → "10 Cr+"
+  return steps;
+})();
+
+// Map tab → steps array
+const BUDGET_STEPS_MAP: Record<string, number[]> = {
+  "Buy":              BUDGET_STEPS_BUY,
+  "Rent":             BUDGET_STEPS_RENT,
+  "Commercial Buy":   BUDGET_STEPS_COMMERCIAL_BUY,
+  "Commercial Rent":  BUDGET_STEPS_COMMERCIAL_RENT,
+  "Plots/Land":       BUDGET_STEPS_PLOTS,
+  // "Projects":      ...,   // TBD
+  // "New Launch":    ...,   // TBD
+};
+
+// Sentinel cap labels per tab (shown when maxIdx === last index)
+const BUDGET_MAX_LABEL: Record<string, string> = {
+  "Buy":             "2 Cr+",
+  "Rent":            "1 L+",
+  "Commercial Buy":  "2 Cr+",
+  "Commercial Rent": "1 L+",
+  "Plots/Land":      "10 Cr+",
+  "Projects":        "No max",
+  "New Launch":      "No max",
+};
+
+// Export the active steps (consumers like DualRangeSlider need it)
+export function getBudgetSteps(tab: string): number[] {
+  return BUDGET_STEPS_MAP[tab] ?? BUDGET_STEPS_BUY;
+}
+
+export function formatBudget(val: number, isMax = false, tab = "Buy"): string {
+  // val === 0 at index 0 → "No min"; val === 0 at last index → cap label
+  if (val === 0) {
+    if (isMax) return BUDGET_MAX_LABEL[tab] ?? "No max";
+    return "No min";
+  }
   if (val >= 10000000) return `${(val / 10000000).toFixed(val % 10000000 === 0 ? 0 : 1)} Cr`;
   if (val >= 100000)   return `${(val / 100000).toFixed(val % 100000 === 0 ? 0 : 1)} L`;
-  return val.toLocaleString("en-IN");
+  if (val >= 1000)     return `₹${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}K`;
+  return `₹${val.toLocaleString("en-IN")}`;
 }
 
 // ─── Area ─────────────────────────────────────────────────────────────────────
@@ -326,9 +426,9 @@ export default function RealEstateSearchAdvanced() {
   const [selectedPossYears,    setSelectedPossYears]    = useState<string[]>([]);
   const [builderQuery,         setBuilderQuery]         = useState("");
 
-  // budget slider
+  // budget slider — indices into the ACTIVE steps array for the current tab
   const [budgetMinIdx, setBudgetMinIdx] = useState(0);
-  const [budgetMaxIdx, setBudgetMaxIdx] = useState(BUDGET_STEPS.length - 1);
+  const [budgetMaxIdx, setBudgetMaxIdx] = useState(() => getBudgetSteps("Buy").length - 1);
 
   // area slider + unit
   const [areaMinIdx, setAreaMinIdx] = useState(0);
@@ -346,7 +446,7 @@ export default function RealEstateSearchAdvanced() {
   useOutsideClick(budgetRef, () => { if (openDD === "budget") setOpenDD(null); });
   useOutsideClick(areaRef,   () => { if (openDD === "area")   setOpenDD(null); });
 
-  // ── Reset category-specific filters on tab change ──────────────────────────
+  // ── Reset when tab changes ──────────────────────────────────────────────────
   useEffect(() => {
     setSelectedTypes([]);
     setSelectedBHK([]);
@@ -360,7 +460,10 @@ export default function RealEstateSearchAdvanced() {
     setBuilderQuery("");
     setShowMore(false);
     setOpenDD(null);
-    // Intentionally keep: city, budget, area — users expect those to persist
+    // Reset budget indices to full range for the new tab's steps
+    setBudgetMinIdx(0);
+    setBudgetMaxIdx(getBudgetSteps(activeTab).length - 1);
+    // Keep city & area as-is
   }, [activeTab]);
 
   const toggle = <T,>(arr: T[], val: T): T[] =>
@@ -369,36 +472,87 @@ export default function RealEstateSearchAdvanced() {
   const vis = FILTER_VISIBILITY[activeTab] ?? FILTER_VISIBILITY["Buy"];
   const currentPropertyTypes = PROPERTY_TYPES_MAP[activeTab] ?? PROPERTY_TYPES_MAP["Buy"];
 
-  const budgetActive = budgetMinIdx > 0 || budgetMaxIdx < BUDGET_STEPS.length - 1;
+  // Active budget steps for the current tab
+  const activeBudgetSteps = getBudgetSteps(activeTab);
+  const budgetActive = budgetMinIdx > 0 || budgetMaxIdx < activeBudgetSteps.length - 1;
   const areaActive   = areaMinIdx  > 0 || areaMaxIdx  < AREA_STEPS_SQFT.length - 1;
 
+  const budgetMinVal = activeBudgetSteps[budgetMinIdx];
+  const budgetMaxVal = activeBudgetSteps[budgetMaxIdx];
+
   const budgetLabel = budgetActive
-    ? `${formatBudget(BUDGET_STEPS[budgetMinIdx])} – ${formatBudget(BUDGET_STEPS[budgetMaxIdx], true)}`
-    : "Budget";
+    ? `${formatBudget(budgetMinVal, false, activeTab)} – ${formatBudget(budgetMaxVal, true, activeTab)}`
+    : (activeTab === "Rent" || activeTab === "Commercial Rent") ? "Rent range" : "Budget";
 
   const areaLabel = areaActive
     ? `${formatArea(AREA_STEPS_SQFT[areaMinIdx], areaUnit)} – ${formatArea(AREA_STEPS_SQFT[areaMaxIdx], areaUnit, true)}`
     : "Area";
 
-  // Budget label changes for Rent tab
-  const budgetPillLabel = activeTab === "Rent"
-    ? (budgetActive ? budgetLabel : "Rent range")
-    : budgetLabel;
+  // ── Budget quick presets per tab ────────────────────────────────────────────
+  const budgetPresets: { label: string; min: number; max: number }[] = (() => {
+    const steps = activeBudgetSteps;
+    const lastIdx = steps.length - 1;
+
+    const findIdx = (target: number) => {
+      const idx = steps.indexOf(target);
+      return idx === -1 ? lastIdx : idx;
+    };
+
+    switch (activeTab) {
+      case "Buy":
+      case "Commercial Buy":
+        return [
+          { label: "Under 50 L",  min: 0,                    max: findIdx(5000000)  },
+          { label: "50 L – 1 Cr", min: findIdx(5000000),     max: findIdx(10000000) },
+          { label: "1 – 2 Cr",    min: findIdx(10000000),    max: lastIdx           },
+          { label: "2 Cr+",       min: findIdx(20000000),    max: lastIdx           },
+        ];
+      case "Rent":
+        return [
+          { label: "Under 10K",  min: 0,               max: findIdx(10000) },
+          { label: "10K – 25K",  min: findIdx(10000),  max: findIdx(25000) },
+          { label: "25K – 50K",  min: findIdx(25000),  max: findIdx(50000) },
+          { label: "50K+",       min: findIdx(50000),  max: lastIdx        },
+        ];
+      case "Commercial Rent":
+        return [
+          { label: "Under 25K",  min: 0,               max: findIdx(25000) },
+          { label: "25K – 50K",  min: findIdx(25000),  max: findIdx(50000) },
+          { label: "50K – 1 L",  min: findIdx(50000),  max: findIdx(100000)},
+          { label: "1 L+",       min: findIdx(100000), max: lastIdx        },
+        ];
+      case "Plots/Land":
+        return [
+          { label: "Under 50 L",   min: 0,                  max: findIdx(5000000)   },
+          { label: "50 L – 1 Cr",  min: findIdx(5000000),   max: findIdx(10000000)  },
+          { label: "1 – 5 Cr",     min: findIdx(10000000),  max: findIdx(50000000)  },
+          { label: "5 Cr+",        min: findIdx(50000000),  max: lastIdx            },
+        ];
+      default:
+        return [
+          { label: "Under 50 L", min: 0, max: Math.floor(lastIdx * 0.25) },
+          { label: "50 L – 1 Cr",min: Math.floor(lastIdx * 0.25), max: Math.floor(lastIdx * 0.5) },
+          { label: "1–2 Cr",     min: Math.floor(lastIdx * 0.5),  max: Math.floor(lastIdx * 0.75)},
+          { label: "2 Cr+",      min: Math.floor(lastIdx * 0.75), max: lastIdx },
+        ];
+    }
+  })();
 
   function handleSearch() {
     dispatch(resetFilters());
     dispatch(setCategory(activeTab));
     if (cityLocal) dispatch(setCity(cityLocal));
     if (query.trim()) dispatch(setSearchQuery(query.trim()));
-    dispatch(setMinBudget(BUDGET_STEPS[budgetMinIdx]));
-    dispatch(setMaxBudget(budgetMaxIdx === BUDGET_STEPS.length - 1 ? 0 : BUDGET_STEPS[budgetMaxIdx]));
+    // For sentinel (last index = 0), send 0 to signal "no upper limit"
+    dispatch(setMinBudget(budgetMinVal));
+    dispatch(setMaxBudget(budgetMaxIdx === activeBudgetSteps.length - 1 ? 0 : budgetMaxVal));
     dispatch(setMinArea(AREA_STEPS_SQFT[areaMinIdx]));
     dispatch(setMaxArea(areaMaxIdx === AREA_STEPS_SQFT.length - 1 ? 0 : AREA_STEPS_SQFT[areaMaxIdx]));
     selectedTypes.forEach(t => dispatch(togglePropertyType(t)));
     selectedBHK.forEach(b => dispatch(toggleBedroom(b)));
     selectedAvailability.forEach(a => dispatch(toggleAvailability(a)));
     navigate("/property-search");
-    window.scrollTo(0,0)
+    window.scrollTo(0, 0);
   }
 
   function goToCity(c: string) {
@@ -406,21 +560,6 @@ export default function RealEstateSearchAdvanced() {
     dispatch(setCity(c));
     navigate("/property-search");
   }
-
-  // ── Budget quick presets differ by tab ─────────────────────────────────────
-  const budgetPresets = activeTab === "Rent"
-    ? [
-        { label: "Under 10K",   min: 0, max: 1 },
-        { label: "10K – 25K",  min: 1, max: 3 },
-        { label: "25K – 50K",  min: 3, max: 5 },
-        { label: "50K+",       min: 5, max: BUDGET_STEPS.length - 1 },
-      ]
-    : [
-        { label: "Under 50 L", min: 0, max: 9 },
-        { label: "50 L – 1 Cr",min: 9, max: 10 },
-        { label: "1–2 Cr",     min: 10, max: 12 },
-        { label: "2 Cr+",      min: 12, max: BUDGET_STEPS.length - 1 },
-      ];
 
   return (
     <section
@@ -482,23 +621,6 @@ export default function RealEstateSearchAdvanced() {
 
               {openDD === "city" && (
                 <div className="absolute z-50 top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl">
-                  {/* <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-4 pt-3 pb-1">
-                    Popular cities
-                  </p>
-                  <div className="flex flex-wrap gap-2 px-4 pb-3">
-                    {POPULAR_CITIES.map(c => (
-                      <button
-                        key={c}
-                        onClick={() => { setCityLocal(c); setOpenDD(null); }}
-                        className={`px-3 py-1 rounded-full border text-xs transition
-                          ${cityLocal === c
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "border-gray-300 text-gray-600 hover:border-blue-400"}`}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div> */}
                   <div className="border-t border-gray-100">
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-4 pt-2 pb-1">
                       All cities
@@ -555,7 +677,7 @@ export default function RealEstateSearchAdvanced() {
           {/* ── Row 2: Quick filters ── */}
           <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-100">
 
-            {/* Property type — shown for all tabs */}
+            {/* Property type */}
             {vis.propertyType && (
               <div ref={typeRef} className="relative">
                 <Pill
@@ -565,11 +687,12 @@ export default function RealEstateSearchAdvanced() {
                   onClick={() => setOpenDD(openDD === "type" ? null : "type")}
                 />
                 {openDD === "type" && (
-                  <div className="absolute z-50 top-full left-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-xl py-2">
-                    {currentPropertyTypes.map(({ label, value }) => (
+                  <div className="absolute z-50 top-full left-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-xl py-2 md:max-h-46 overflow-auto">
+                    {/* {currentPropertyTypes.map(({ label, value }) => ( */}
+                    {currentPropertyTypes.map(({ value }) => (
                       <CheckRow
                         key={value}
-                        label={label}
+                        label={value}
                         checked={selectedTypes.includes(value)}
                         onChange={() => setSelectedTypes(prev => toggle(prev, value))}
                       />
@@ -579,7 +702,7 @@ export default function RealEstateSearchAdvanced() {
               </div>
             )}
 
-            {/* BHK chips — Buy, Rent, Projects, New Launch only */}
+            {/* BHK chips */}
             {vis.bhk && BHK_OPTIONS.map(opt => (
               <button
                 key={opt.label}
@@ -597,22 +720,24 @@ export default function RealEstateSearchAdvanced() {
             {vis.budget && (
               <div ref={budgetRef} className="relative">
                 <Pill
-                  label={budgetPillLabel}
+                  label={budgetLabel}
                   active={openDD === "budget" || budgetActive}
                   onClick={() => setOpenDD(openDD === "budget" ? null : "budget")}
                 />
                 {openDD === "budget" && (
                   <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-5">
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-4">
-                      {activeTab === "Rent" ? "Monthly rent range" : "Price range"}
+                      {(activeTab === "Rent" || activeTab === "Commercial Rent")
+                        ? "Monthly rent range"
+                        : "Price range"}
                     </p>
                     <DualRangeSlider
-                      steps={BUDGET_STEPS}
+                      steps={activeBudgetSteps}
                       minIdx={budgetMinIdx}
                       maxIdx={budgetMaxIdx}
                       onMinChange={setBudgetMinIdx}
                       onMaxChange={setBudgetMaxIdx}
-                      formatLabel={(v, isMax) => formatBudget(v, isMax)}
+                      formatLabel={(v, isMax) => formatBudget(v, isMax, activeTab)}
                     />
                     <div className="mt-4 flex flex-wrap gap-1.5">
                       {budgetPresets.map(p => (
@@ -627,7 +752,10 @@ export default function RealEstateSearchAdvanced() {
                     </div>
                     {budgetActive && (
                       <button
-                        onClick={() => { setBudgetMinIdx(0); setBudgetMaxIdx(BUDGET_STEPS.length - 1); }}
+                        onClick={() => {
+                          setBudgetMinIdx(0);
+                          setBudgetMaxIdx(activeBudgetSteps.length - 1);
+                        }}
                         className="mt-3 text-xs text-red-500 hover:underline"
                       >
                         Clear
@@ -675,9 +803,9 @@ export default function RealEstateSearchAdvanced() {
                     />
                     <div className="mt-4 flex flex-wrap gap-1.5">
                       {[
-                        { label: "< 1000 sq.ft", min: 0, max: 4  },
-                        { label: "1000–2000",     min: 4, max: 7  },
-                        { label: "2000–5000",     min: 7, max: 11 },
+                        { label: "< 1000 sq.ft", min: 0,  max: 4  },
+                        { label: "1000–2000",     min: 4,  max: 7  },
+                        { label: "2000–5000",     min: 7,  max: 11 },
                         { label: "5000+",         min: 11, max: AREA_STEPS_SQFT.length - 1 },
                       ].map(p => (
                         <button
@@ -702,7 +830,7 @@ export default function RealEstateSearchAdvanced() {
               </div>
             )}
 
-            {/* More filters toggle — only show if there are more filters for this tab */}
+            {/* More filters toggle */}
             {(vis.possession || vis.furnishing || vis.availableFor || vis.postedBy ||
               vis.builder || vis.amenities || vis.bathrooms || vis.possessionYear) && (
               <button
@@ -721,7 +849,6 @@ export default function RealEstateSearchAdvanced() {
           {showMore && (
             <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
 
-              {/* Possession status — Buy, Commercial, Projects, New Launch */}
               {vis.possession && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
@@ -739,7 +866,6 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Possession year — Projects, New Launch */}
               {vis.possessionYear && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
@@ -762,7 +888,6 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Builder search — Projects, New Launch */}
               {vis.builder && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
@@ -786,7 +911,6 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Furnishing — Buy, Rent, Commercial */}
               {vis.furnishing && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Furnishing</p>
@@ -802,14 +926,13 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Available for — Rent only */}
               {vis.availableFor && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
                     Available for
                   </p>
                   <div className="space-y-0.5">
-                    {AVAILABLE_FOR.map(a => (
+                    {AVAILABLE_FOR_OPTIONS.map(a => (
                       <CheckRow
                         key={a} label={a}
                         checked={selectedAvailFor.includes(a)}
@@ -820,7 +943,6 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Posted by — Buy, Rent, Commercial, Plots */}
               {vis.postedBy && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Posted by</p>
@@ -836,7 +958,6 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Bathrooms — Buy, Rent */}
               {vis.bathrooms && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Bathrooms</p>
@@ -857,12 +978,11 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Amenities — Buy, Rent, Projects, New Launch */}
               {vis.amenities && (
                 <div className="sm:col-span-2 lg:col-span-1">
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Amenities</p>
                   <div className="flex flex-wrap gap-2">
-                    {AMENITIES_OPTS.map(a => (
+                    {AMENITIES_LIST.map(a => (
                       <button
                         key={a}
                         onClick={() => setSelectedAmenities(prev => toggle(prev, a))}
@@ -878,7 +998,6 @@ export default function RealEstateSearchAdvanced() {
                 </div>
               )}
 
-              {/* Property type icon grid — shown in More panel for Buy/Rent */}
               {vis.propertyType && (activeTab === "Buy" || activeTab === "Rent") && (
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
@@ -908,7 +1027,6 @@ export default function RealEstateSearchAdvanced() {
       </div>
 
       {/* ── Popular cities ── */}
-      {/* <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3"> */}
       <div className="relative mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         <span className="text-blue-300/70 text-sm">Popular cities:</span>
         {POPULAR_CITIES.map(c => (

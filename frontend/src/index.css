@@ -59,3 +59,33 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Hides the default track so only our custom div track shows */
+.range-thumb::-webkit-slider-runnable-track { background: transparent; }
+.range-thumb::-moz-range-track              { background: transparent; }
+
+/* Thumb styling */
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #2563eb;   /* blue-600 */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.range-thumb::-webkit-slider-thumb:hover,
+.range-thumb:focus::-webkit-slider-thumb { transform: scale(1.15); }
+
+.range-thumb::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #2563eb;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+}

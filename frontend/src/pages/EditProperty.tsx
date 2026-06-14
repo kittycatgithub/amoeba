@@ -52,6 +52,7 @@ interface FormState {
   role: string
   category: string
   propertyType: string
+  price: string
   title: string
   city: string
   locality: string
@@ -85,6 +86,7 @@ const initialForm: FormState = {
   area: '',
   furnishing: '',
   price: '',
+  priceValue: '', 
   priceUnit: 'Lac',
   availability: '',
   availableFor: [],
@@ -178,6 +180,7 @@ const EditProperty = () => {
           role: prop.postedBy || 'Owner',
           category: prop.category || 'Buy',
           propertyType: prop.type || '',
+          price: prop.price || '',
           title: prop.title || '',
           city: prop.city || '',
           locality: prop.location?.split(',')[0] || '',

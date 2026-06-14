@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { clearWishlist, fetchWishlist, removeFromWishlist } from "../store/slices/wishlistSlice";
+import { clearWishlist, fetchWishlist } from "../store/slices/wishlistSlice";
 import PropertyCard from "../components/PropertyCard";
 import { IoHeartDislikeOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
@@ -71,7 +71,7 @@ const Wishlist = () => {
             <PropertyCard
               key={property._id}
               property={property}
-              onRemove={() => dispatch(removeFromWishlist(property._id))}
+              // onClick={() => dispatch(removeFromWishlist(property._id))}
             />
           ))}
         </div>

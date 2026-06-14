@@ -30,7 +30,7 @@ const Login = () => {
                     avatar: data.user.avatar,
                     createdAt: data.user.createdAt,
                 },
-                token: data.token,
+                // token: data.token,
             }));
             toast.success(`Welcome back, ${data.user.name}!`);
             setShowUserLogin(false);

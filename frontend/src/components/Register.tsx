@@ -54,7 +54,7 @@ const Register = () => {
                     avatar: data.user.avatar,
                     createdAt: data.user.createdAt,
                 },
-                token: data.token,
+                // token: data.token,
             }));
             toast.success(`Welcome, ${data.user.name}!`);
             setShowRegister(false);

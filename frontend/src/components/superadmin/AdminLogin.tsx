@@ -13,7 +13,7 @@ const AdminLogin = () => {
         }
     }, [isAdmin] )
 
-    const onSubmitHandler = async (event) => {
+    const onSubmitHandler = async (event : React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsAdmin(true);
     }

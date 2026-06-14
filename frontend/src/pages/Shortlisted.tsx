@@ -1,15 +1,16 @@
 import { useAppContext } from "../context/AppContext";
-import { useAppDispatch } from "../store/hooks";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { toggleShortlistItem } from "../store/slices/shortlistSlice";
 import PropertyCard from "../components/PropertyCard";
 import { TbBookmarkOff } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 
 const Shortlisted = () => {
-  const { properties, shortlisted } = useAppContext();
+  const { shortlisted } = useAppContext();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  const properties = useAppSelector(state => state.property.properties); // adjust key if needed
   const shortlistedProperties = properties.filter(p => shortlisted.includes(p._id));
 
   return (

@@ -16,7 +16,7 @@ interface Owner {
 
 interface PosterInfo {
   name: string;
-  // role: string;
+  role: string;
   agency: string;
   avatar: string;
   isVerified: boolean;
@@ -43,7 +43,7 @@ interface PosterInfo {
 
 const POSTER_DATA: PosterInfo = {
   name: "Rajesh Sharma",
-  // role: "Senior Real Estate Consultant",
+  role: "Senior Real Estate Consultant",
   agency: "RE/MAX Nagpur",
   avatar: "https://randomuser.me/api/portraits/men/32.jpg",
   isVerified: true,

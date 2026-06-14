@@ -5,14 +5,14 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   setCity,
   setCategory,
-  resetFilters,
-  togglePropertyType,
-  toggleBedroom,
-  toggleAvailability,
-  setMinBudget,
-  setMaxBudget,
-  setMinArea,
-  setMaxArea,
+  // resetFilters,
+  // togglePropertyType,
+  // toggleBedroom,
+  // toggleAvailability,
+  // setMinBudget,
+  // setMaxBudget,
+  // setMinArea,
+  // setMaxArea,
 } from "../store/slices/filterSlice";
 import RangeSlider from "./RangeSlider";
 import { AMENITIES_LIST, AVAILABLE_FOR_OPTIONS } from "../assets/assets";
@@ -576,22 +576,22 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
   // For the max-sentinel (last index, value = 0) we send 0 to signal "no upper limit".
   // ──────────────────────────────────────────────────────────────────────────────
 
-  function handleApply() {
-    const budgetMinVal = activeBudgetSteps[budgetMinIdx];
-    const budgetMaxVal = activeBudgetSteps[budgetMaxIdx];
-    const isMaxSentinel = budgetMaxIdx === activeBudgetSteps.length - 1;
+  // function handleApply() {
+  //   const budgetMinVal = activeBudgetSteps[budgetMinIdx];
+  //   const budgetMaxVal = activeBudgetSteps[budgetMaxIdx];
+  //   const isMaxSentinel = budgetMaxIdx === activeBudgetSteps.length - 1;
 
-    dispatch(setMinBudget(budgetMinVal));
-    dispatch(setMaxBudget(isMaxSentinel ? 0 : budgetMaxVal));
+  //   dispatch(setMinBudget(budgetMinVal));
+  //   dispatch(setMaxBudget(isMaxSentinel ? 0 : budgetMaxVal));
 
-    const isAreaMaxSentinel = areaMaxIdx === AREA_STEPS_SQFT.length - 1;
-    dispatch(setMinArea(AREA_STEPS_SQFT[areaMinIdx]));
-    dispatch(setMaxArea(isAreaMaxSentinel ? 0 : AREA_STEPS_SQFT[areaMaxIdx]));
+  //   const isAreaMaxSentinel = areaMaxIdx === AREA_STEPS_SQFT.length - 1;
+  //   dispatch(setMinArea(AREA_STEPS_SQFT[areaMinIdx]));
+  //   dispatch(setMaxArea(isAreaMaxSentinel ? 0 : AREA_STEPS_SQFT[areaMaxIdx]));
 
-    selectedTypes.forEach((t)  => dispatch(togglePropertyType(t)));
-    selectedBHK.forEach((b)    => dispatch(toggleBedroom(b)));
-    selectedAvailability.forEach((a) => dispatch(toggleAvailability(a)));
-  }
+  //   selectedTypes.forEach((t)  => dispatch(togglePropertyType(t)));
+  //   selectedBHK.forEach((b)    => dispatch(toggleBedroom(b)));
+  //   selectedAvailability.forEach((a) => dispatch(toggleAvailability(a)));
+  // }
 
   // ── Reset everything ─────────────────────────────────────────────────────────
   //
@@ -599,24 +599,24 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
   // the sidebar visually clears too.
   // ──────────────────────────────────────────────────────────────────────────────
 
-  function handleReset() {
-    dispatch(resetFilters());
+  // function handleReset() {
+  //   dispatch(resetFilters());
 
-    setSelectedTypes([]);
-    setSelectedBHK([]);
-    setSelectedAvailability([]);
-    setSelectedFurnishing([]);
-    setSelectedPostedBy([]);
-    setSelectedBathrooms([]);
-    setSelectedAvailFor([]);
-    setSelectedAmenities([]);
-    setSelectedPossYears([]);
+  //   setSelectedTypes([]);
+  //   setSelectedBHK([]);
+  //   setSelectedAvailability([]);
+  //   setSelectedFurnishing([]);
+  //   setSelectedPostedBy([]);
+  //   setSelectedBathrooms([]);
+  //   setSelectedAvailFor([]);
+  //   setSelectedAmenities([]);
+  //   setSelectedPossYears([]);
 
-    setBudgetMinIdx(0);
-    setBudgetMaxIdx(getBudgetSteps("Buy").length - 1);
-    setAreaMinIdx(0);
-    setAreaMaxIdx(AREA_STEPS_SQFT.length - 1);
-  }
+  //   setBudgetMinIdx(0);
+  //   setBudgetMaxIdx(getBudgetSteps("Buy").length - 1);
+  //   setAreaMinIdx(0);
+  //   setAreaMaxIdx(AREA_STEPS_SQFT.length - 1);
+  // }
 
   // ── Derived display values ───────────────────────────────────────────────────
 

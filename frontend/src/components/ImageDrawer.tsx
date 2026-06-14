@@ -10,7 +10,7 @@ interface ImageDrawerProps {
 }
 
 const ImageDrawer = memo<ImageDrawerProps>(({ isOpen, images, onClose }) => {
-  const [selectedCategory, setSelectedCategory] = useState<ImageCategory>(
+  const [selectedCategory, _setSelectedCategory] = useState<ImageCategory>(
     ImageCategory.HALL
   );
   const [zoomedImage, setZoomedImage] = useState<CategorizedImage | null>(null);
@@ -32,12 +32,12 @@ const ImageDrawer = memo<ImageDrawerProps>(({ isOpen, images, onClose }) => {
     [images, selectedCategory]
   );
 
-  const handleCategoryChange = useCallback(
-    (category: ImageCategory) => {
-      setSelectedCategory(category);
-    },
-    []
-  );
+  // const handleCategoryChange = useCallback(
+  //   (category: ImageCategory) => {
+  //     setSelectedCategory(category);
+  //   },
+  //   []
+  // );
 
   const handleImageClickZoom = useCallback((image: CategorizedImage) => {
     setZoomedImage(image);

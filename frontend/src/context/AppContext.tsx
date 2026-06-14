@@ -54,6 +54,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const userProfile = useAppSelector(state => state.user.profile);
   const wishlisted  = useAppSelector(state => state.wishlist?.ids ?? []); 
   const shortlisted = useAppSelector(state => state.shortlist?.ids ?? []);
+  const admin = useAppSelector(state => state.admin.isAdminLoggedIn);
+  const adminProfile = useAppSelector(state => state.admin.profile);
 
   // Fetch properties once on app load
   useEffect(() => {
@@ -82,7 +84,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const value = {
-    navigate, user, userProfile, logout,
+    navigate, user, userProfile, admin, adminProfile, logout,
     showUserLogin, setShowUserLogin,
     showRegister, setShowRegister,
     showForgotPassword, setShowForgotPassword,

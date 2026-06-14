@@ -1,12 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { useAppContext } from '../../context/AppContext'
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { CiCircleList, CiMonitor } from "react-icons/ci";
 import { logout } from '../../store/slices/userSlice'
-import { PiMoneyWavy, PiUserSwitchLight } from 'react-icons/pi';
+import { PiUserSwitchLight } from 'react-icons/pi';
+import { useAppDispatch } from '../../store/hooks';
 
 const AdminLayout = () => {
-    const { setIsAdmin } = useAppContext()
+    const dispatch = useAppDispatch();
+    // const { setIsAdmin } = useAppContext()
 
     const sidebarLinks = [
       {name: "Dashboard", path: "/admin", icon: <CiMonitor/>},
@@ -20,6 +21,10 @@ const AdminLayout = () => {
       // {name: "", path: "", icon: <BsDash/>},
     ]
 
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
   return (
     <>
       <div className='flex items-center justify-between px-4 md:px-8 border-b border-gray-300
@@ -29,7 +34,7 @@ const AdminLayout = () => {
         </NavLink>
         <div className='flex items-center gap-5 text-gray-500'>
           <p>Hi! Power Developer</p>
-          <button onClick={logout} className='border rounded-full text-sm px-4 py-1'>Logout</button>
+          <button onClick={handleLogout} className='border rounded-full text-sm px-4 py-1'>Logout</button>
         </div>
       </div>
       <div className='flex '>

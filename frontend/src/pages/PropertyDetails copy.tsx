@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useCallback, Suspense, lazy } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { TfiLocationPin, TfiRulerAlt2 } from "react-icons/tfi";
 import { IoHeartOutline, IoHeart } from "react-icons/io5";
-import { TbBed, TbBookmark, TbBookmarkFilled } from "react-icons/tb";
+import { TbBed } from "react-icons/tb";
 import { PiBathtub } from "react-icons/pi";
 import ImageDrawer from "../components/ImageDrawer";
 import { ImageCategory, type CategorizedImage } from "../types/imageTypes";
 import { useAppContext } from "../context/AppContext";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppSelector } from "../store/hooks";
 // import { toggleShortlistItem } from "../store/slices/shortlistSlice";
 import PropertyPosterInfo from "../components/SellerInfoCard";
 import { LiaHomeSolid } from "react-icons/lia";
@@ -28,14 +28,14 @@ const AmenitiesSection = lazy(() => import("../components/AmenitiesSection"));
 const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { toggleWishlist, wishlisted, navigate, currency } = useAppContext();
-  const dispatch = useAppDispatch();
+  // const dispatch = useAppDispatch();
   // Fetching properties from Redux slice instead of AppContext
   const properties = useAppSelector(state => state.property.properties ?? []);
-  const shortlisted = useAppSelector(state => state.shortlist.ids);
+  // const shortlisted = useAppSelector(state => state.shortlist.ids);
 
   const property = properties.find(p => p._id === id);
   const isWishlisted = property ? wishlisted.includes(property._id) : false;
-  const isShortlisted = property ? shortlisted.includes(property._id) : false;
+  // const isShortlisted = property ? shortlisted.includes(property._id) : false;
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -72,7 +72,6 @@ const PropertyDetails: React.FC = () => {
 
   return (
     <div className="bg-gray-50">
-     {console.log(property, 'property')}
     <div className="min-h-screen bg-gray-50 max-w-5xl mx-auto">
       <div className="flex flex-col lg:flex-row">
           {/* MAIN IMAGE SECTION */}

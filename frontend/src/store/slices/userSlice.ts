@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string;
   phone: string;
   role: string;
+  websiteUrl?: string;
   avatar: string;
   createdAt: string;
 }

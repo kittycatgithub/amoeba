@@ -71,7 +71,7 @@ const HeaderCarousel = () => {
                 {slide.title}
                 <span className="block w-20 h-[2px] bg-themeyellow mx-auto mt-2" />
               </h4>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-semibold mb-6 leading-tight">
                 {slide.heading}
               </h1>
               <p className="text-base sm:text-lg md:text-xl mb-8 leading-relaxed">
@@ -79,12 +79,12 @@ const HeaderCarousel = () => {
               </p>
               <div className="flex justify-center gap-4">                
                 <NavLink to="/property-search" onClick={()=> scrollTo(0,0)}
-                  className="bg-themeyellow hover:bg-themeyellow-dull animate-pulse text-black font-semibold py-3 px-8 rounded-full transition-transform transform hover:scale-105"
+                  className="bg-themeyellow hover:bg-themeyellow-dull animate-pulse text-black font-semibold py-3 px-4 md:px-8 rounded-full transition-transform transform hover:scale-105"
                 >
                   Explore Properties
                 </NavLink>
                 <NavLink to="/contact" onClick={()=> scrollTo(0,0)}
-                  className="bg-primary hover:bg-primary-dull animate-pulse text-white font-semibold py-3 px-8 rounded-full transition-transform transform hover:scale-105"
+                  className="bg-primary hover:bg-primary-dull animate-pulse text-white font-semibold py-3 px-4 md:px-8 rounded-full transition-transform transform hover:scale-105"
                 >
                   Contact Us
                 </NavLink>

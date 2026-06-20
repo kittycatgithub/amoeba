@@ -23,7 +23,11 @@ const PROPERTY_TYPES_MAP: Record<string, string[]> = {
     'Residential Apartment', 'Independent House/Villa', 'Builder Floor',
     '1 RK / Studio Apartment', 'PG', 'Co-living'
   ],
-  Commercial: [
+  'Commercial Buy': [
+    'Commercial Office', 'Commercial Shop', 'Commercial Showroom',
+    'Warehouse / Godown', 'Industrial Building', 'Commercial Land',
+  ],
+  'Commercial Rent': [
     'Commercial Office', 'Commercial Shop', 'Commercial Showroom',
     'Warehouse / Godown', 'Industrial Building', 'Commercial Land',
   ],
@@ -99,7 +103,8 @@ const initialForm: FormState = {
   launchDate: '',
 }
 
-const CATEGORIES = ['Buy', 'Rent', 'Commercial', 'Plots & Land', 'Projects', 'New Launch']
+// const CATEGORIES = ['Buy', 'Rent', 'Commercial Buy', 'Commercial Rent', 'Plots & Land', 'Projects', 'New Launch']
+const CATEGORIES = ['Buy', 'Rent', 'Commercial Buy', 'Commercial Rent', 'Plots & Land']
 const FURNISHING_OPTIONS = ['Furnished', 'Semi-Furnished', 'Unfurnished']
 const AVAILABILITY_OPTIONS = ['Ready to Move', 'Within 6 Months', 'Within 1 Year', 'More Than 1 Year']
 const PROJECT_STATUS_OPTIONS = ['Pre-Launch', 'Under Construction', 'Ready to Move', 'Completed']
@@ -107,13 +112,13 @@ const PROJECT_STATUS_OPTIONS = ['Pre-Launch', 'Under Construction', 'Ready to Mo
 // ─── Category behaviour helpers ──────────────────────────────────────────────
 
 /** Categories where bedrooms/bathrooms don't apply */
-const NO_ROOMS_CATS = new Set(['Commercial', 'Plots & Land'])
+const NO_ROOMS_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land'])
 
 /** Categories where furnishing doesn't apply */
-const NO_FURNISHING_CATS = new Set(['Commercial', 'Plots & Land'])
+const NO_FURNISHING_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land'])
 
 /** Categories where "Available For" (family/single) doesn't apply */
-const NO_AVAIL_FOR_CATS = new Set(['Commercial', 'Plots & Land', 'Projects', 'New Launch'])
+const NO_AVAIL_FOR_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land', 'Projects', 'New Launch'])
 
 /** Categories that need builder/project-specific fields */
 const PROJECT_CATS = new Set(['Projects', 'New Launch'])
@@ -122,7 +127,9 @@ const PROJECT_CATS = new Set(['Projects', 'New Launch'])
 const PRICE_UNITS: Record<string, string[]> = {
   Buy: ['Lac', 'Cr'],
   Rent: ['₹/mo', '₹/sq ft'],
-  Commercial: ['Lac', 'Cr', '₹/mo', '₹/sq ft'],
+  'Commercial Buy': ['Lac', 'Cr', '₹/sq ft'],
+  // 'Commercial Rent': ['₹/mo', '₹/sq ft'],
+  'Commercial Rent': ['₹/mo'],
   'Plots & Land': ['Lac', 'Cr', '₹/sq ft'],
   Projects: ['Lac', 'Cr'],
   'New Launch': ['Lac', 'Cr'],
@@ -184,17 +191,35 @@ const AddProperty = () => {
     }))
 
   // ─── Image handling ─────────────────────────────────────────────────────────
-  const handleImages = (files: FileList | null) => {
-    if (!files) return
-    const incoming = Array.from(files).slice(0, 6 - images.length)
-    if (images.length + incoming.length > 6) {
-      toast.error('Maximum 6 images allowed')
-      return
-    }
-    const newPreviews = incoming.map(f => URL.createObjectURL(f))
-    setImages(prev => [...prev, ...incoming])
-    setPreviews(prev => [...prev, ...newPreviews])
+const handleImages = (files: FileList | null) => {
+  if (!files) return
+
+  const MAX_SIZE_MB = 5
+  const allFiles = Array.from(files)
+
+  // Filter out files exceeding 5 MB
+  const oversized = allFiles.filter(f => f.size > MAX_SIZE_MB * 1024 * 1024)
+  if (oversized.length > 0) {
+    toast.error(
+      oversized.length === 1
+        ? `"${oversized[0].name}" exceeds 5 MB limit`
+        : `${oversized.length} images exceed the 5 MB limit and were skipped`
+    )
   }
+
+  const validFiles = allFiles.filter(f => f.size <= MAX_SIZE_MB * 1024 * 1024)
+  if (validFiles.length === 0) return
+
+  const incoming = validFiles.slice(0, 6 - images.length)
+  if (images.length + incoming.length > 6) {
+    toast.error('Maximum 6 images allowed')
+    return
+  }
+
+  const newPreviews = incoming.map(f => URL.createObjectURL(f))
+  setImages(prev => [...prev, ...incoming])
+  setPreviews(prev => [...prev, ...newPreviews])
+}
 
   const removeImage = (idx: number) => {
     URL.revokeObjectURL(previews[idx])
@@ -489,7 +514,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                   onChange={e => set('title', e.target.value)}
                   placeholder={
                     form.category === 'Plots & Land'   ? 'e.g. 200 Sq Yd Plot in Sector 21' :
-                    form.category === 'Commercial'      ? 'e.g. Office Space in Bandra BKC' :
+                    form.category === 'Commercial Buy'  ? 'e.g. Office Space for Sale in BKC' :
+                    form.category === 'Commercial Rent' ? 'e.g. Office Space for Rent in BKC' :
                     form.category === 'Projects'        ? 'e.g. Godrej Woods Phase 2' :
                     form.category === 'New Launch'      ? 'e.g. Prestige Lakeside Habitat' :
                     'e.g. 3 BHK Flat in Koramangala'
@@ -675,7 +701,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div className="flex gap-3 items-start max-w-xs">
               <div className="flex-1">
                 <label className={labelCls}>
-                  {form.category === 'Rent' ? 'Rent Amount *' : 'Price *'}
+                    {form.category === 'Rent' || form.category === 'Commercial Rent' ? 'Rent Amount *' : 'Price *'}
                 </label>
                 <input
                   type="number"
@@ -755,7 +781,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-800 mb-1">Property Images</h2>
             <p className="text-xs text-gray-400 mb-4">
-              Upload up to 6 images (JPG, PNG). First image will be the cover.
+              Upload up to 6 images (JPG, PNG - max size 5MB). First image will be the cover.
             </p>
             <div className="flex flex-wrap gap-3">
               {previews.map((src, idx) => (

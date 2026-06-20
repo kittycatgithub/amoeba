@@ -1,5 +1,5 @@
 import HeaderCarousel from '../components/HeaderCarousel'
-import NewsLetter from '../components/NewsLetter'
+// import NewsLetter from '../components/NewsLetter'
 import RealEstateSearchAdvanced from '../components/RealEstateSearchAdvanced'
 
 const Home = () => {
@@ -9,7 +9,7 @@ const Home = () => {
         <RealEstateSearchAdvanced/>
         {/* <Services/> */}
         {/* <ServicesSection/> */}
-        <NewsLetter />
+        {/* <NewsLetter /> */}
     </div>
   )
 }

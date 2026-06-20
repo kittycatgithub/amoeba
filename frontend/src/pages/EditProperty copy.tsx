@@ -1,11 +1,10 @@
-import React, { useRef, useState, useMemo } from 'react'
+import React, { useRef, useState, useMemo, useEffect } from 'react'
 import { FiUploadCloud, FiX } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
-import { createPropertyApi } from '../api/propertyApi'
+import { getPropertyApi, updatePropertyApi } from '../api/propertyApi'
 import { motion } from "framer-motion";
-import { uploadToCloudinary } from '../utils/uploadToCloudinary'
-import { AVAILABLE_FOR_OPTIONS } from '../assets/assets'
 
 const CITIES = [
   'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai', 'Kolkata',
@@ -13,7 +12,6 @@ const CITIES = [
   'Gurugram', 'Indore', 'Bhopal', 'Surat',
 ]
 
-// Property types filtered per category
 const PROPERTY_TYPES_MAP: Record<string, string[]> = {
   Buy: [
     'Residential Apartment', 'Independent House/Villa', 'Builder Floor',
@@ -21,13 +19,9 @@ const PROPERTY_TYPES_MAP: Record<string, string[]> = {
   ],
   Rent: [
     'Residential Apartment', 'Independent House/Villa', 'Builder Floor',
-    '1 RK / Studio Apartment', 'PG', 'Co-living'
+    '1 RK / Studio Apartment',
   ],
-  'Commercial Buy': [
-    'Commercial Office', 'Commercial Shop', 'Commercial Showroom',
-    'Warehouse / Godown', 'Industrial Building', 'Commercial Land',
-  ],
-  'Commercial Rent': [
+  Commercial: [
     'Commercial Office', 'Commercial Shop', 'Commercial Showroom',
     'Warehouse / Godown', 'Industrial Building', 'Commercial Land',
   ],
@@ -58,6 +52,7 @@ interface FormState {
   role: string
   category: string
   propertyType: string
+  price: string
   title: string
   city: string
   locality: string
@@ -66,13 +61,12 @@ interface FormState {
   bathrooms: string
   area: string
   furnishing: string
-  price: string
+  priceValue: string
   priceUnit: string
   availability: string
   availableFor: string[]
   amenities: string[]
   description: string
-  // Projects / New Launch extras
   builderName: string
   projectStatus: string
   reraNumber: string
@@ -92,6 +86,7 @@ const initialForm: FormState = {
   area: '',
   furnishing: '',
   price: '',
+  priceValue: '', 
   priceUnit: 'Lac',
   availability: '',
   availableFor: [],
@@ -103,53 +98,124 @@ const initialForm: FormState = {
   launchDate: '',
 }
 
-// const CATEGORIES = ['Buy', 'Rent', 'Commercial Buy', 'Commercial Rent', 'Plots & Land', 'Projects', 'New Launch']
-const CATEGORIES = ['Buy', 'Rent', 'Commercial Buy', 'Commercial Rent', 'Plots & Land']
+const CATEGORIES = ['Buy', 'Rent', 'Commercial', 'Plots & Land', 'Projects', 'New Launch']
 const FURNISHING_OPTIONS = ['Furnished', 'Semi-Furnished', 'Unfurnished']
 const AVAILABILITY_OPTIONS = ['Ready to Move', 'Within 6 Months', 'Within 1 Year', 'More Than 1 Year']
+const AVAILABLE_FOR_OPTIONS = ['Family', 'Single Men', 'Single Women', 'Company Lease']
 const PROJECT_STATUS_OPTIONS = ['Pre-Launch', 'Under Construction', 'Ready to Move', 'Completed']
 
-// ─── Category behaviour helpers ──────────────────────────────────────────────
-
-/** Categories where bedrooms/bathrooms don't apply */
-const NO_ROOMS_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land'])
-
-/** Categories where furnishing doesn't apply */
-const NO_FURNISHING_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land'])
-
-/** Categories where "Available For" (family/single) doesn't apply */
-const NO_AVAIL_FOR_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land', 'Projects', 'New Launch'])
-
-/** Categories that need builder/project-specific fields */
+const NO_ROOMS_CATS = new Set(['Commercial', 'Plots & Land'])
+const NO_FURNISHING_CATS = new Set(['Commercial', 'Plots & Land'])
+const NO_AVAIL_FOR_CATS = new Set(['Commercial', 'Plots & Land', 'Projects', 'New Launch'])
 const PROJECT_CATS = new Set(['Projects', 'New Launch'])
 
-/** Price unit options vary by category */
 const PRICE_UNITS: Record<string, string[]> = {
   Buy: ['Lac', 'Cr'],
   Rent: ['₹/mo', '₹/sq ft'],
-  'Commercial Buy': ['Lac', 'Cr', '₹/sq ft'],
-  // 'Commercial Rent': ['₹/mo', '₹/sq ft'],
-  'Commercial Rent': ['₹/mo'],
+  Commercial: ['Lac', 'Cr', '₹/mo', '₹/sq ft'],
   'Plots & Land': ['Lac', 'Cr', '₹/sq ft'],
   Projects: ['Lac', 'Cr'],
   'New Launch': ['Lac', 'Cr'],
 }
 
-const AddProperty = () => {
+// Helper to parse price value from display string
+const parsePriceValue = (priceStr: string): { value: string; unit: string } => {
+  const lacMatch = priceStr.match(/^([\d.]+)\s*Lac/);
+  const crMatch = priceStr.match(/^([\d.]+)\s*Cr/);
+  const moMatch = priceStr.match(/^([\d.]+)K\/mo/);
+  const sqftMatch = priceStr.match(/^₹([\d.]+)\/sqft/);
+
+  if (lacMatch) return { value: lacMatch[1], unit: 'Lac' };
+  if (crMatch) return { value: crMatch[1], unit: 'Cr' };
+  if (moMatch) return { value: moMatch[1], unit: '₹/mo' };
+  if (sqftMatch) return { value: sqftMatch[1], unit: '₹/sq ft' };
+  return { value: '', unit: 'Lac' };
+};
+
+// Helper to parse area value
+const parseAreaValue = (areaStr: string): string => {
+  const match = areaStr.match(/^([\d.]+)/);
+  return match ? match[1] : '';
+};
+
+const EditProperty = () => {
+  const { id } = useParams<{ id: string }>()
   const { user, setShowUserLogin } = useAppContext()
+  const navigate = useNavigate()
   const [form, setForm] = useState<FormState>(initialForm)
   const [images, setImages] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
+  const [existingImages, setExistingImages] = useState<string[]>([])
+  const [imagesToRemove, setImagesToRemove] = useState<string[]>([])
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  // ─── Image upload state (add this alongside existing useState hooks) ─────────
-  const [uploadProgress, setUploadProgress] = useState(0); // 0–100
 
-  // ─── Derived visibility flags ───────────────────────────────────────────────
-  const showRooms       = !NO_ROOMS_CATS.has(form.category)
-  const showFurnishing  = !NO_FURNISHING_CATS.has(form.category)
-  const showAvailFor    = !NO_AVAIL_FOR_CATS.has(form.category)
+  // Fetch property data on mount
+  useEffect(() => {
+    const fetchProperty = async () => {
+      try {
+        const { data } = await getPropertyApi(id!)
+        const prop = data.property
+        console.log(prop, 'prop')
+
+        // Parse price
+        // const { value: priceValue, unit: priceUnit } = parsePriceValue(prop.price)
+        const { unit: priceUnit } = parsePriceValue(prop.price)
+
+        // Parse area
+        const areaValue = parseAreaValue(prop.area)
+
+        // Parse availableFor and amenities
+        const availableFor = typeof prop.availableFor === 'string'
+          ? JSON.parse(prop.availableFor || '[]')
+          : prop.availableFor || []
+
+        const amenities = typeof prop.amenities === 'string'
+          ? JSON.parse(prop.amenities || '[]')
+          : prop.amenities || []
+
+        setForm({
+          role: prop.postedBy || 'Owner',
+          category: prop.category || 'Buy',
+          propertyType: prop.type || '',
+          price: prop.price || '',
+          title: prop.title || '',
+          city: prop.city || '',
+          locality: prop.location?.split(',')[0] || '',
+          address: prop.address || '',
+          bedrooms: String(prop.bedrooms || ''),
+          bathrooms: String(prop.bathrooms || ''),
+          area: areaValue,
+          furnishing: prop.furnishing || '',
+          priceValue: prop.priceValue,
+          priceUnit: priceUnit,
+          availability: prop.availability || '',
+          availableFor: availableFor,
+          amenities: amenities,
+          description: prop.description || '',
+          builderName: prop.builderName || '',
+          projectStatus: prop.projectStatus || '',
+          reraNumber: prop.reraNumber || '',
+          launchDate: prop.launchDate || '',
+        })
+
+        setExistingImages(prop.images || [])
+        setLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch property:', error)
+        toast.error('Failed to load property')
+        navigate('/my-properties')
+      }
+    }
+
+    if (id) fetchProperty()
+  }, [id, navigate])
+
+  const showRooms = !NO_ROOMS_CATS.has(form.category)
+  const showFurnishing = !NO_FURNISHING_CATS.has(form.category)
+  const showAvailFor = !NO_AVAIL_FOR_CATS.has(form.category)
   const showProjectInfo = PROJECT_CATS.has(form.category)
 
   const propertyTypes = useMemo(
@@ -159,12 +225,10 @@ const AddProperty = () => {
 
   const priceUnits = PRICE_UNITS[form.category] ?? ['Lac', 'Cr']
 
-  // ─── Field setters ──────────────────────────────────────────────────────────
   const set = (field: keyof FormState, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }))
 
   const handleCategoryChange = (cat: string) => {
-    // Reset fields that change meaning across categories
     setForm(prev => ({
       ...prev,
       category: cat,
@@ -190,44 +254,30 @@ const AddProperty = () => {
         : [...prev[field], value],
     }))
 
-  // ─── Image handling ─────────────────────────────────────────────────────────
-const handleImages = (files: FileList | null) => {
-  if (!files) return
-
-  const MAX_SIZE_MB = 5
-  const allFiles = Array.from(files)
-
-  // Filter out files exceeding 5 MB
-  const oversized = allFiles.filter(f => f.size > MAX_SIZE_MB * 1024 * 1024)
-  if (oversized.length > 0) {
-    toast.error(
-      oversized.length === 1
-        ? `"${oversized[0].name}" exceeds 5 MB limit`
-        : `${oversized.length} images exceed the 5 MB limit and were skipped`
-    )
+  const handleImages = (files: FileList | null) => {
+    if (!files) return
+    const maxAllowed = 6 - (existingImages.length - imagesToRemove.length) - images.length
+    if (maxAllowed <= 0) {
+      toast.error('Maximum 6 images allowed')
+      return
+    }
+    const incoming = Array.from(files).slice(0, maxAllowed)
+    const newPreviews = incoming.map(f => URL.createObjectURL(f))
+    setImages(prev => [...prev, ...incoming])
+    setPreviews(prev => [...prev, ...newPreviews])
   }
 
-  const validFiles = allFiles.filter(f => f.size <= MAX_SIZE_MB * 1024 * 1024)
-  if (validFiles.length === 0) return
-
-  const incoming = validFiles.slice(0, 6 - images.length)
-  if (images.length + incoming.length > 6) {
-    toast.error('Maximum 6 images allowed')
-    return
-  }
-
-  const newPreviews = incoming.map(f => URL.createObjectURL(f))
-  setImages(prev => [...prev, ...incoming])
-  setPreviews(prev => [...prev, ...newPreviews])
-}
-
-  const removeImage = (idx: number) => {
+  const removeNewImage = (idx: number) => {
     URL.revokeObjectURL(previews[idx])
     setImages(prev => prev.filter((_, i) => i !== idx))
     setPreviews(prev => prev.filter((_, i) => i !== idx))
   }
 
-  // ─── Validation ─────────────────────────────────────────────────────────────
+  const removeExistingImage = (idx: number) => {
+    setImagesToRemove(prev => [...prev, existingImages[idx]])
+    setExistingImages(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormState, string>> = {}
     if (!form.role) e.role = 'Please select your role'
@@ -245,162 +295,70 @@ const handleImages = (files: FileList | null) => {
     return Object.keys(e).length === 0
   }
 
-  // ─── Submit ─────────────────────────────────────────────────────────────────
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault()
-  //   if (!validate()) {
-  //     toast.error('Please fill all required fields')
-  //     return
-  //   }
-  //   setSubmitting(true)
-  //   try {
-  //     const priceNum = Number(form.price)
-  //     const areaNum = Number(form.area)
-  //     const priceDisplay =
-  //       form.priceUnit === '₹/mo'    ? `${priceNum}/mo`
-  //       : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
-  //       : `${priceNum} ${form.priceUnit}`
-
-  //     const fd = new FormData()
-  //     fd.append('title', form.title)
-  //     fd.append('category', form.category)
-  //     fd.append('price', priceDisplay)
-  //     fd.append('priceValue', String(priceNum))
-  //     fd.append('area', `${areaNum} Sq.Ft`)
-  //     fd.append('areaValue', String(areaNum))
-  //     fd.append('type', form.propertyType)
-  //     fd.append('bedrooms', form.bedrooms || '0')
-  //     fd.append('bathrooms', form.bathrooms || '0')
-  //     fd.append('furnishing', form.furnishing)
-  //     fd.append('availableFor', JSON.stringify(form.availableFor))
-  //     fd.append('amenities', JSON.stringify(form.amenities))
-  //     fd.append('location', `${form.locality}, ${form.city}`)
-  //     fd.append('city', form.city)
-  //     fd.append('description', form.description)
-  //     fd.append('availability', form.availability || 'Ready to Move')
-  //     if (showProjectInfo) {
-  //       fd.append('builderName', form.builderName)
-  //       fd.append('projectStatus', form.projectStatus)
-  //       fd.append('reraNumber', form.reraNumber)
-  //       fd.append('launchDate', form.launchDate)
-  //     }
-  //     images.forEach(file => fd.append('images', file))
-
-  //     await createPropertyApi(fd)
-  //     setForm(initialForm)
-  //     setImages([])
-  //     setPreviews([])
-  //     setErrors({})
-  //     toast.success('Property listed successfully!')
-  //     window.scrollTo(0,0)
-  //   } catch (err: any) {
-  //     toast.error(err.response?.data?.message || 'Failed to post property')
-  //   } finally {
-  //     setSubmitting(false)
-  //   }
-  // }
-  // ─── Replace handleSubmit ────────────────────────────────────────────────────
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('handleSubmit called');        // ← does this log?
-  console.log('validate result:', validate()); // ← is this false?
-  console.log('current errors:', errors);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!validate()) {
-      toast.error('Please fill all required fields');
-      return;
+      toast.error('Please fill all required fields')
+      return
     }
-    setSubmitting(true);
-    setUploadProgress(0);
-
+    setSubmitting(true)
     try {
-      // 1. Upload all images directly to Cloudinary in parallel
-      let imageUrls: string[] = [];
-      if (images.length > 0) {
-        const total = images.length;
-        let done = 0;
+      const priceNum = Number(form.price)
+      const areaNum = Number(form.area)
+      const priceDisplay =
+        form.priceUnit === '₹/mo' ? `${priceNum}K/mo`
+          : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
+            : `${priceNum} ${form.priceUnit}`
 
-        imageUrls = await Promise.all(
-          images.map(async (file) => {
-            const url = await uploadToCloudinary(file);
-            done++;
-            setUploadProgress(Math.round((done / total) * 100));
-            return url;
-          })
-        );
+      const fd = new FormData()
+      fd.append('title', form.title)
+      fd.append('category', form.category)
+      fd.append('price', priceDisplay)
+      fd.append('priceValue', String(priceNum))
+      fd.append('area', `${areaNum} Sq.Ft`)
+      fd.append('areaValue', String(areaNum))
+      fd.append('type', form.propertyType)
+      fd.append('bedrooms', form.bedrooms || '0')
+      fd.append('bathrooms', form.bathrooms || '0')
+      fd.append('furnishing', form.furnishing)
+      fd.append('availableFor', JSON.stringify(form.availableFor))
+      fd.append('amenities', JSON.stringify(form.amenities))
+      fd.append('location', `${form.locality}, ${form.city}`)
+      fd.append('city', form.city)
+      fd.append('description', form.description)
+      fd.append('availability', form.availability || 'Ready to Move')
+      if (showProjectInfo) {
+        fd.append('builderName', form.builderName)
+        fd.append('projectStatus', form.projectStatus)
+        fd.append('reraNumber', form.reraNumber)
+        fd.append('launchDate', form.launchDate)
       }
 
-      // 2. Build plain JSON payload — no FormData, no file bytes
-      const priceNum = Number(form.price);
-      const areaNum  = Number(form.area);
+      // Add existing images to keep
+      fd.append('existingImages', JSON.stringify(existingImages))
+      // Add images to remove
+      fd.append('imagesToRemove', JSON.stringify(imagesToRemove))
+      // Add new images
+      images.forEach(file => fd.append('images', file))
 
-      // ─── Convert price to absolute ₹ value based on unit ────────────────────────
-      const UNIT_MULTIPLIER: Record<string, number> = {
-        'Lac':      100_000,       // 1 Lac  = ₹1,00,000
-        'Cr':       10_000_000,    // 1 Cr   = ₹1,00,00,000
-        '₹/mo':    1,              // already in ₹, store as-is
-        '₹/sq ft': 1,              // per sq ft rate, store as-is
-      };
-
-      const priceValueInRupees = priceNum * (UNIT_MULTIPLIER[form.priceUnit] ?? 1);
-
-
-      const priceDisplay =
-            form.priceUnit === '₹/mo'     ? `${priceNum}/mo`
-            : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
-            : `${priceNum} ${form.priceUnit}`;
-
-      const payload = {
-        title:        form.title,
-        category:     form.category,
-        price:        priceDisplay,
-        priceValue:   priceValueInRupees,
-        area:         `${areaNum} Sq.Ft`,
-        areaValue:    areaNum,
-        type:         form.propertyType,
-        bedrooms:     form.bedrooms || '0',
-        bathrooms:    form.bathrooms || '0',
-        furnishing:   form.furnishing,
-        availableFor: form.availableFor,
-        amenities:    form.amenities,
-        location:     `${form.locality}, ${form.city}`,
-        city:         form.city,
-        description:  form.description,
-        availability: form.availability || 'Ready to Move',
-        images:       imageUrls,          // ← Cloudinary URLs, not File objects
-        ...(showProjectInfo && {
-          builderName:   form.builderName,
-          projectStatus: form.projectStatus,
-          reraNumber:    form.reraNumber,
-          launchDate:    form.launchDate,
-        }),
-      };
-
-      // 3. POST JSON to your backend — backend stores URLs, never sees files
-      await createPropertyApi(payload);
-
-      setForm(initialForm);
-      setImages([]);
-      setPreviews([]);
-      setErrors({});
-      setUploadProgress(0);
-      toast.success('Property listed successfully!');
-      window.scrollTo(0, 0);
+      await updatePropertyApi(id!, fd)
+      toast.success('Property updated successfully!')
+      navigate('/my-properties')
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to post property');
+      toast.error(err.response?.data?.message || 'Failed to update property')
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
-  // ─── Auth Guard ─────────────────────────────────────────────────────────────
   if (!user) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">🏠</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Login to Post Property</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Login to Edit Property</h2>
           <p className="text-gray-500 mb-6">
-            You need to be logged in to list your property for free.
+            You need to be logged in to edit your property.
           </p>
           <button
             onClick={() => setShowUserLogin(true)}
@@ -413,7 +371,14 @@ const handleSubmit = async (e: React.FormEvent) => {
     )
   }
 
-  // ─── Style helpers ───────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4">
+        <p className="text-gray-500 text-lg">Loading property...</p>
+      </div>
+    )
+  }
+
   const inputCls = (field?: keyof FormState) =>
     `w-full px-3 py-2.5 rounded-lg border outline-none text-sm transition ${
       field && errors[field]
@@ -432,7 +397,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         : 'border-gray-300 text-gray-600 hover:border-primary hover:text-primary'
     }`
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
@@ -449,7 +413,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             transition={{ duration: 2 }}
             className="text-white text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6"
           >
-            Post Property
+            Edit Property
           </motion.h1>
         </div>
       </div>
@@ -457,9 +421,9 @@ const handleSubmit = async (e: React.FormEvent) => {
       <div className="max-w-4xl mx-auto py-10 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Post Property <span className="text-primary-dull">Free</span>
+            Edit Your <span className="text-primary-dull">Property</span>
           </h1>
-          <p className="text-gray-500 mt-1">Fill in the details below to list your property</p>
+          <p className="text-gray-500 mt-1">Update the details below</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -490,7 +454,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Property Category</h2>
 
-            {/* Category tabs */}
             <div className="flex flex-wrap gap-2 mb-5">
               {CATEGORIES.map(cat => (
                 <button
@@ -524,12 +487,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                   value={form.title}
                   onChange={e => set('title', e.target.value)}
                   placeholder={
-                    form.category === 'Plots & Land'   ? 'e.g. 200 Sq Yd Plot in Sector 21' :
-                    form.category === 'Commercial Buy'  ? 'e.g. Office Space for Sale in BKC' :
-                    form.category === 'Commercial Rent' ? 'e.g. Office Space for Rent in BKC' :
-                    form.category === 'Projects'        ? 'e.g. Godrej Woods Phase 2' :
-                    form.category === 'New Launch'      ? 'e.g. Prestige Lakeside Habitat' :
-                    'e.g. 3 BHK Flat in Koramangala'
+                    form.category === 'Plots & Land' ? 'e.g. 200 Sq Yd Plot in Sector 21' :
+                      form.category === 'Commercial' ? 'e.g. Office Space in Bandra BKC' :
+                        form.category === 'Projects' ? 'e.g. Godrej Woods Phase 2' :
+                          form.category === 'New Launch' ? 'e.g. Prestige Lakeside Habitat' :
+                            'e.g. 3 BHK Flat in Koramangala'
                   }
                   className={inputCls('title')}
                 />
@@ -538,7 +500,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           </div>
 
-          {/* ── Section 3: Builder / Project Info (Projects & New Launch only) ── */}
+          {/* ── Section 3: Builder / Project Info ── */}
           {showProjectInfo && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">
@@ -639,10 +601,9 @@ const handleSubmit = async (e: React.FormEvent) => {
               showRooms && showFurnishing
                 ? 'grid-cols-2 sm:grid-cols-4'
                 : showRooms || showFurnishing
-                ? 'grid-cols-2 sm:grid-cols-3'
-                : 'grid-cols-1 sm:grid-cols-2'
+                  ? 'grid-cols-2 sm:grid-cols-3'
+                  : 'grid-cols-1 sm:grid-cols-2'
             }`}>
-              {/* Bedrooms & Bathrooms — hidden for Commercial & Plots/Land */}
               {showRooms && (
                 <>
                   <div>
@@ -689,7 +650,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 {errMsg('area')}
               </div>
 
-              {/* Furnishing — hidden for Commercial & Plots/Land */}
               {showFurnishing && (
                 <div>
                   <label className={labelCls}>Furnishing</label>
@@ -712,19 +672,19 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div className="flex gap-3 items-start max-w-xs">
               <div className="flex-1">
                 <label className={labelCls}>
-                    {form.category === 'Rent' || form.category === 'Commercial Rent' ? 'Rent Amount *' : 'Price *'}
+                  {form.category === 'Rent' ? 'Rent Amount *' : 'Price *'}
                 </label>
                 <input
                   type="number"
-                  value={form.price}
-                  onChange={e => set('price', e.target.value)}
+                  value={form.priceValue}
+                  onChange={e => set('priceValue', e.target.value)}
                   placeholder={
                     form.category === 'Rent' ? 'e.g. 25000' : 'e.g. 45'
                   }
                   min={0}
-                  className={inputCls('price')}
+                  className={inputCls('priceValue')}
                 />
-                {errMsg('price')}
+                {errMsg('priceValue')}
               </div>
               <div className="w-28">
                 <label className={labelCls}>Unit</label>
@@ -763,7 +723,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
               </div>
 
-              {/* Available For — hidden for Commercial, Plots/Land, Projects, New Launch */}
               {showAvailFor && (
                 <div>
                   <label className={labelCls}>Available For</label>
@@ -791,9 +750,41 @@ const handleSubmit = async (e: React.FormEvent) => {
           {/* ── Section 8: Images ── */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-800 mb-1">Property Images</h2>
-            <p className="text-xs text-gray-400 mb-4">
-              Upload up to 6 images (JPG, PNG - max size 5MB). First image will be the cover.
+            <p className="text-sm text-gray-800 mb-4">
+              You can update up to 6 images total (JPG, PNG). First image will be the cover.
             </p>
+
+            {/* Existing images */}
+            {existingImages.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Current Images</p>
+                <div className="flex flex-wrap gap-3">
+                  {existingImages.map((src, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-28 h-28 rounded-xl overflow-hidden border border-gray-200 group"
+                    >
+                      {/* <img src={src} alt={`existing-${idx}`} className="w-full h-full object-cover" /> */}
+                      <img src={`http://localhost:5000${src}`} alt={`existing-${idx}`} className="w-full h-full object-cover" />
+                      {idx === 0 && (
+                        <span className="absolute bottom-0 left-0 right-0 bg-primary/80 text-white text-[10px] text-center py-0.5">
+                          Cover
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(idx)}
+                        className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                      >
+                        <FiX className="text-gray-700 text-xs" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* New images */}
             <div className="flex flex-wrap gap-3">
               {previews.map((src, idx) => (
                 <div
@@ -801,14 +792,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                   className="relative w-28 h-28 rounded-xl overflow-hidden border border-gray-200 group"
                 >
                   <img src={src} alt={`preview-${idx}`} className="w-full h-full object-cover" />
-                  {idx === 0 && (
-                    <span className="absolute bottom-0 left-0 right-0 bg-primary/80 text-white text-[10px] text-center py-0.5">
-                      Cover
-                    </span>
-                  )}
                   <button
                     type="button"
-                    onClick={() => removeImage(idx)}
+                    onClick={() => removeNewImage(idx)}
                     className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow opacity-0 group-hover:opacity-100 transition cursor-pointer"
                   >
                     <FiX className="text-gray-700 text-xs" />
@@ -816,7 +802,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
               ))}
 
-              {images.length < 6 && (
+              {(existingImages.length - imagesToRemove.length + images.length) < 6 && (
                 <label
                   htmlFor="prop-images"
                   className="w-28 h-28 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary hover:bg-primary/5 transition"
@@ -840,13 +826,13 @@ const handleSubmit = async (e: React.FormEvent) => {
           {/* ── Section 9: Amenities ── */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Amenities</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {AMENITIES_LIST.map(amenity => (
                 <label
                   key={amenity}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition ${
                     form.amenities.includes(amenity)
-                      ? 'border-primary bg-primary/10 text-primary font-medium'
+                      ? 'border-transparent bg-primary/5 text-primary font-medium'
                       : 'border-gray-200 text-gray-600 hover:border-primary/40'
                   }`}
                 >
@@ -879,43 +865,22 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           {/* ── Submit ── */}
-            {/* <div className="flex justify-end pb-10">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-10 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
-              >
-                {submitting ? 'Posting...' : 'Post Property Free'}
-              </button>
-            </div> */}
-            {/* ── Submit ── */}
-            <div className="flex flex-col items-end gap-3 pb-10">
-              {submitting && uploadProgress > 0 && uploadProgress < 100 && (
-                <div className="w-full max-w-xs">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Uploading images…</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div
-                      className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-10 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
-              >
-                {submitting
-                  ? uploadProgress < 100
-                    ? `Uploading ${uploadProgress}%…`
-                    : 'Posting…'
-                  : 'Post Property Free'}
-              </button>
-            </div>
+          <div className="flex justify-end pb-10 gap-4">
+            <button
+              type="button"
+              onClick={() => navigate('/my-properties')}
+              className="px-4 py-1.5 md:px-8 md:py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-full hover:border-primary hover:text-primary transition cursor-pointer text-base"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-1.5 md:px-10 md:py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
+            >
+              {submitting ? 'Updating...' : 'Update Property'}
+            </button>
+          </div>
 
         </form>
       </div>
@@ -923,4 +888,4 @@ const handleSubmit = async (e: React.FormEvent) => {
   )
 }
 
-export default AddProperty
+export default EditProperty

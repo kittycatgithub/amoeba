@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { getPropertyApi, updatePropertyApi } from '../api/propertyApi'
 import { motion } from "framer-motion";
+import { uploadToCloudinary } from '../utils/uploadToCloudinary'
 
 const CITIES = [
   'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai', 'Kolkata',
@@ -21,7 +22,11 @@ const PROPERTY_TYPES_MAP: Record<string, string[]> = {
     'Residential Apartment', 'Independent House/Villa', 'Builder Floor',
     '1 RK / Studio Apartment',
   ],
-  Commercial: [
+  'Commercial Buy': [
+    'Commercial Office', 'Commercial Shop', 'Commercial Showroom',
+    'Warehouse / Godown', 'Industrial Building', 'Commercial Land',
+  ],
+  'Commercial Rent': [
     'Commercial Office', 'Commercial Shop', 'Commercial Showroom',
     'Warehouse / Godown', 'Industrial Building', 'Commercial Land',
   ],
@@ -98,39 +103,65 @@ const initialForm: FormState = {
   launchDate: '',
 }
 
-const CATEGORIES = ['Buy', 'Rent', 'Commercial', 'Plots & Land', 'Projects', 'New Launch']
+const CATEGORIES = ['Buy', 'Rent', 'Commercial Buy', 'Commercial Rent', 'Plots & Land']
 const FURNISHING_OPTIONS = ['Furnished', 'Semi-Furnished', 'Unfurnished']
 const AVAILABILITY_OPTIONS = ['Ready to Move', 'Within 6 Months', 'Within 1 Year', 'More Than 1 Year']
 const AVAILABLE_FOR_OPTIONS = ['Family', 'Single Men', 'Single Women', 'Company Lease']
 const PROJECT_STATUS_OPTIONS = ['Pre-Launch', 'Under Construction', 'Ready to Move', 'Completed']
 
-const NO_ROOMS_CATS = new Set(['Commercial', 'Plots & Land'])
-const NO_FURNISHING_CATS = new Set(['Commercial', 'Plots & Land'])
-const NO_AVAIL_FOR_CATS = new Set(['Commercial', 'Plots & Land', 'Projects', 'New Launch'])
+const NO_ROOMS_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land'])
+const NO_FURNISHING_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land'])
+const NO_AVAIL_FOR_CATS = new Set(['Commercial Buy', 'Commercial Rent', 'Plots & Land', 'Projects', 'New Launch'])
 const PROJECT_CATS = new Set(['Projects', 'New Launch'])
 
 const PRICE_UNITS: Record<string, string[]> = {
   Buy: ['Lac', 'Cr'],
   Rent: ['₹/mo', '₹/sq ft'],
-  Commercial: ['Lac', 'Cr', '₹/mo', '₹/sq ft'],
+  'Commercial Buy':  ['Lac', 'Cr', '₹/sq ft'],
+  'Commercial Rent': ['₹/mo'],
   'Plots & Land': ['Lac', 'Cr', '₹/sq ft'],
   Projects: ['Lac', 'Cr'],
   'New Launch': ['Lac', 'Cr'],
 }
 
 // Helper to parse price value from display string
+// const parsePriceValue = (priceStr: string): { value: string; unit: string } => {
+//   const lacMatch = priceStr.match(/^([\d.]+)\s*Lac/);
+//   const crMatch = priceStr.match(/^([\d.]+)\s*Cr/);
+//   const moMatch = priceStr.match(/^([\d.]+)K\/mo/);
+//   const sqftMatch = priceStr.match(/^₹([\d.]+)\/sqft/);
+
+//   if (lacMatch) return { value: lacMatch[1], unit: 'Lac' };
+//   if (crMatch) return { value: crMatch[1], unit: 'Cr' };
+//   if (moMatch) return { value: moMatch[1], unit: '₹/mo' };
+//   if (sqftMatch) return { value: sqftMatch[1], unit: '₹/sq ft' };
+//   return { value: '', unit: 'Lac' };
+// };
+
 const parsePriceValue = (priceStr: string): { value: string; unit: string } => {
-  const lacMatch = priceStr.match(/^([\d.]+)\s*Lac/);
-  const crMatch = priceStr.match(/^([\d.]+)\s*Cr/);
-  const moMatch = priceStr.match(/^([\d.]+)K\/mo/);
+  const lacMatch  = priceStr.match(/^([\d.]+)\s*Lac/);
+  const crMatch   = priceStr.match(/^([\d.]+)\s*Cr/);
+  const moMatch   = priceStr.match(/^([\d.]+)\/mo/);      // ← removed K prefix
   const sqftMatch = priceStr.match(/^₹([\d.]+)\/sqft/);
 
-  if (lacMatch) return { value: lacMatch[1], unit: 'Lac' };
-  if (crMatch) return { value: crMatch[1], unit: 'Cr' };
-  if (moMatch) return { value: moMatch[1], unit: '₹/mo' };
+  if (lacMatch)  return { value: lacMatch[1],  unit: 'Lac' };
+  if (crMatch)   return { value: crMatch[1],   unit: 'Cr' };
+  if (moMatch)   return { value: moMatch[1],   unit: '₹/mo' };
   if (sqftMatch) return { value: sqftMatch[1], unit: '₹/sq ft' };
   return { value: '', unit: 'Lac' };
 };
+
+const UNIT_MULTIPLIER: Record<string, number> = {
+  'Lac':      100_000,
+  'Cr':       10_000_000,
+  '₹/mo':    1,
+  '₹/sq ft': 1,
+}
+
+const reversePrice = (priceValueFromDB: number, unit: string): string => {
+  const multiplier = UNIT_MULTIPLIER[unit] ?? 1
+  return String(priceValueFromDB / multiplier)
+}
 
 // Helper to parse area value
 const parseAreaValue = (areaStr: string): string => {
@@ -162,7 +193,9 @@ const EditProperty = () => {
 
         // Parse price
         // const { value: priceValue, unit: priceUnit } = parsePriceValue(prop.price)
+        // const { unit: priceUnit } = parsePriceValue(prop.price)
         const { unit: priceUnit } = parsePriceValue(prop.price)
+        const rawPriceInput = reversePrice(prop.priceValue, priceUnit)  // e.g. 4500000 → "45"
 
         // Parse area
         const areaValue = parseAreaValue(prop.area)
@@ -189,7 +222,7 @@ const EditProperty = () => {
           bathrooms: String(prop.bathrooms || ''),
           area: areaValue,
           furnishing: prop.furnishing || '',
-          priceValue: prop.priceValue,
+          priceValue: rawPriceInput,
           priceUnit: priceUnit,
           availability: prop.availability || '',
           availableFor: availableFor,
@@ -287,8 +320,8 @@ const EditProperty = () => {
     if (!form.locality.trim()) e.locality = 'Locality is required'
     if (!form.area || isNaN(Number(form.area)) || Number(form.area) <= 0)
       e.area = 'Enter valid area'
-    if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0)
-      e.price = 'Enter valid price'
+    if (!form.priceValue || isNaN(Number(form.priceValue)) || Number(form.priceValue) <= 0)
+      e.priceValue = 'Enter valid price'
     if (showProjectInfo && !form.builderName.trim())
       e.builderName = 'Builder / Developer name is required'
     setErrors(e)
@@ -303,45 +336,56 @@ const EditProperty = () => {
     }
     setSubmitting(true)
     try {
-      const priceNum = Number(form.price)
+      const priceNum = Number(form.priceValue)
       const areaNum = Number(form.area)
-      const priceDisplay =
-        form.priceUnit === '₹/mo' ? `${priceNum}K/mo`
-          : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
-            : `${priceNum} ${form.priceUnit}`
 
-      const fd = new FormData()
-      fd.append('title', form.title)
-      fd.append('category', form.category)
-      fd.append('price', priceDisplay)
-      fd.append('priceValue', String(priceNum))
-      fd.append('area', `${areaNum} Sq.Ft`)
-      fd.append('areaValue', String(areaNum))
-      fd.append('type', form.propertyType)
-      fd.append('bedrooms', form.bedrooms || '0')
-      fd.append('bathrooms', form.bathrooms || '0')
-      fd.append('furnishing', form.furnishing)
-      fd.append('availableFor', JSON.stringify(form.availableFor))
-      fd.append('amenities', JSON.stringify(form.amenities))
-      fd.append('location', `${form.locality}, ${form.city}`)
-      fd.append('city', form.city)
-      fd.append('description', form.description)
-      fd.append('availability', form.availability || 'Ready to Move')
-      if (showProjectInfo) {
-        fd.append('builderName', form.builderName)
-        fd.append('projectStatus', form.projectStatus)
-        fd.append('reraNumber', form.reraNumber)
-        fd.append('launchDate', form.launchDate)
+      const priceValueInRupees = priceNum * (UNIT_MULTIPLIER[form.priceUnit] ?? 1)
+
+      const priceDisplay =
+        form.priceUnit === '₹/mo'     ? `${priceNum}/mo`
+        : form.priceUnit === '₹/sq ft' ? `₹${priceNum}/sqft`
+        : `${priceNum} ${form.priceUnit}`
+
+      // 1. Upload any NEW images to Cloudinary first
+      let newImageUrls: string[] = []
+      if (images.length > 0) {
+        newImageUrls = await Promise.all(
+          images.map(file => uploadToCloudinary(file))
+        )
       }
 
-      // Add existing images to keep
-      fd.append('existingImages', JSON.stringify(existingImages))
-      // Add images to remove
-      fd.append('imagesToRemove', JSON.stringify(imagesToRemove))
-      // Add new images
-      images.forEach(file => fd.append('images', file))
+      // 2. Build final image array: kept existing + newly uploaded
+      const finalImages = [...existingImages, ...newImageUrls]
 
-      await updatePropertyApi(id!, fd)
+      // 3. Send plain JSON — no FormData
+      const payload = {
+        title:        form.title,
+        category:     form.category,
+        price:        priceDisplay,
+        priceValue:   priceValueInRupees,
+        area:         `${areaNum} Sq.Ft`,
+        areaValue:    areaNum,
+        type:         form.propertyType,
+        bedrooms:     form.bedrooms || '0',
+        bathrooms:    form.bathrooms || '0',
+        furnishing:   form.furnishing,
+        availableFor: form.availableFor,
+        amenities:    form.amenities,
+        location:     `${form.locality}, ${form.city}`,
+        city:         form.city,
+        description:  form.description,
+        availability: form.availability || 'Ready to Move',
+        images:       finalImages,          // ← Cloudinary URLs only
+        imagesToRemove,                     // ← backend will delete these from Cloudinary
+        ...(showProjectInfo && {
+          builderName:   form.builderName,
+          projectStatus: form.projectStatus,
+          reraNumber:    form.reraNumber,
+          launchDate:    form.launchDate,
+        }),
+      }
+
+      await updatePropertyApi(id!, payload)
       toast.success('Property updated successfully!')
       navigate('/my-properties')
     } catch (err: any) {
@@ -487,12 +531,13 @@ const EditProperty = () => {
                   value={form.title}
                   onChange={e => set('title', e.target.value)}
                   placeholder={
-                    form.category === 'Plots & Land' ? 'e.g. 200 Sq Yd Plot in Sector 21' :
-                      form.category === 'Commercial' ? 'e.g. Office Space in Bandra BKC' :
-                        form.category === 'Projects' ? 'e.g. Godrej Woods Phase 2' :
-                          form.category === 'New Launch' ? 'e.g. Prestige Lakeside Habitat' :
-                            'e.g. 3 BHK Flat in Koramangala'
-                  }
+                      form.category === 'Plots & Land'    ? 'e.g. 200 Sq Yd Plot in Sector 21' :
+                      form.category === 'Commercial Buy'  ? 'e.g. Office Space for Sale in BKC' :
+                      form.category === 'Commercial Rent' ? 'e.g. Office Space for Rent in BKC' :
+                      form.category === 'Projects'        ? 'e.g. Godrej Woods Phase 2' :
+                      form.category === 'New Launch'      ? 'e.g. Prestige Lakeside Habitat' :
+                      'e.g. 3 BHK Flat in Koramangala'
+                    }
                   className={inputCls('title')}
                 />
                 {errMsg('title')}
@@ -672,7 +717,7 @@ const EditProperty = () => {
             <div className="flex gap-3 items-start max-w-xs">
               <div className="flex-1">
                 <label className={labelCls}>
-                  {form.category === 'Rent' ? 'Rent Amount *' : 'Price *'}
+                  {form.category === 'Rent' || form.category === 'Commercial Rent' ? 'Rent Amount *' : 'Price *'}
                 </label>
                 <input
                   type="number"

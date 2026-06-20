@@ -63,10 +63,13 @@ export const createPropertyApi = async (payload: Record<string, any>) => {
   return data;
 };
 
-export const updatePropertyApi = (id: string, formData: FormData) =>
-  api.put(`/api/properties/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+// export const updatePropertyApi = (id: string, formData: FormData) =>
+//   api.put(`/api/properties/${id}`, formData, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+
+export const updatePropertyApi = (id: string, payload: object) =>
+  api.put(`/api/properties/${id}`, payload)
 
 export const deletePropertyApi = (id: string) =>
   api.delete(`/api/properties/${id}`);

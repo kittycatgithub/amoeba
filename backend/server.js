@@ -33,7 +33,7 @@ await connectCloudinary()
 app.get('/', (req, res)=> res.send('API is working') )
 
 // Allow multiple origins
-const allowedOrigins = ['http://localhost:5173', 'http://192.168.1.42']
+const allowedOrigins = ['http://localhost:5173', 'http://192.168.1.42', 'https://pulsarproperties.in', 'https://www.pulsarproperties.in', 'http://pulsarproperties.in', 'http://www.pulsarproperties.in']
 
 // ─── Middleware ──────────────────────────────────────────────
 app.use(cookieParser());

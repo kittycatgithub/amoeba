@@ -1,82 +1,129 @@
-import { useRef, useEffect, useState, useMemo } from "react";
+// SearchPage.tsx
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import PropertyCard from "../components/PropertyCard";
 import { BsFilterRight } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 import { FaSearch, FaMapMarkerAlt } from "react-icons/fa";
-import { useAppSelector } from "../store/hooks";
-import { resetFilters, setSearchQuery, setCity } from "../store/slices/filterSlice";
-import { useAppDispatch } from "../store/hooks";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import { resetFilters, setSearchQuery, setCity, setFilters } from "../store/slices/filterSlice";
+import { fetchProperties } from "../store/slices/propertySlice";
+import { type PropertyFilters } from "../api/propertyApi";
 
 const SearchPage = () => {
-  // Fetching properties from Redux slice instead of AppContext
-  const properties = useAppSelector(state => state.property.properties ?? []);
-  const filters = useAppSelector(state => state.filters);
   const dispatch = useAppDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const properties = useAppSelector(state => state.property.properties ?? []);
+  const total = useAppSelector(state => state.property.total ?? 0);
+  const filters = useAppSelector(state => state.filters);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [searchInput, setSearchInput] = useState(filters.searchQuery);
+  const [searchInput, setSearchInput] = useState("");
   const drawerRef = useRef<HTMLDivElement>(null);
+  const hasMountFetched = useRef(false);
 
-  const handleSearch = () => {
-    dispatch(setSearchQuery(searchInput.trim()));
-  };
+  // ── Helper: build PropertyFilters from Redux filter state ──────────────────
+  const buildFetchParams = (f: typeof filters): PropertyFilters => ({
+    page:          1,
+    category:      f.category    || undefined,
+    city:          f.city        || undefined,
+    search:        f.searchQuery || undefined,
+    minBudget:     f.minBudget   || undefined,
+    maxBudget:     f.maxBudget   || undefined,
+    minArea:       f.minArea     || undefined,
+    maxArea:       f.maxArea     || undefined,
+    bedrooms:      f.bedrooms.length      ? f.bedrooms      : undefined,
+    propertyTypes: f.propertyTypes.length ? f.propertyTypes : undefined,
+    furnishing:    f.furnishing.length    ? f.furnishing    : undefined,
+    postedBy:      f.postedBy.length      ? f.postedBy      : undefined,
+    bathrooms:     f.bathrooms.length     ? f.bathrooms     : undefined,
+    amenities:     f.amenities.length     ? f.amenities     : undefined,
+    availableFor:  f.availableFor.length  ? f.availableFor  : undefined,
+    availability:  f.availability.length  ? f.availability  : undefined,
+  });
 
-  // Apply all sidebar filters to the full property list
-  const filteredProperties = useMemo(() => {
-    return properties.filter(p => {
-      if (filters.category && p.category !== filters.category) return false;
-      if (filters.city && p.city !== filters.city) return false;
-      if (filters.searchQuery) {
-        const q = filters.searchQuery.toLowerCase();
-        if (!p.title.toLowerCase().includes(q) && !p.location?.toLowerCase().includes(q)) return false;
-      }
-      if (filters.minBudget > 0 && p.priceValue < filters.minBudget) return false;
-      if (filters.maxBudget > 0 && p.priceValue > filters.maxBudget) return false;
-      if (filters.minArea > 0 && p.areaValue < filters.minArea) return false;
-      if (filters.maxArea > 0 && p.areaValue > filters.maxArea) return false;
-      if (filters.bedrooms.length > 0 && !filters.bedrooms.includes(p.bedrooms)) return false;
-      if (filters.propertyTypes.length > 0 && !filters.propertyTypes.includes(p.type)) return false;
-      if (filters.furnishing.length > 0 && !filters.furnishing.includes(p.furnishing)) return false;
-      if (filters.postedBy.length > 0 && !filters.postedBy.includes(p.postedBy)) return false;
-      if (filters.bathrooms.length > 0 && !filters.bathrooms.includes(p.bathrooms)) return false;
-      if (filters.amenities.length > 0 && !filters.amenities.every((a: string) => p.amenities?.includes(a))) return false;
-      if (filters.availableFor.length > 0 && !filters.availableFor.some((a: string) => p.availableFor?.includes(a))) return false;
-      if (filters.availability.length > 0 && (!p.availability || !filters.availability.includes(p.availability))) return false;
-      return true;
-    });
-  }, [properties, filters]);
-
-  const hasActiveFilters = filters.category || filters.searchQuery || filters.city
-    || filters.minBudget > 0 || filters.maxBudget > 0
-    || filters.minArea > 0 || filters.maxArea > 0
-    || filters.bedrooms.length > 0 || filters.propertyTypes.length > 0
-    || filters.furnishing.length > 0 || filters.postedBy.length > 0 || filters.bathrooms.length > 0
-    || filters.amenities.length > 0 || filters.availableFor.length > 0 || filters.availability.length > 0;
-
-  // Close drawer when clicking outside
+  // ── On mount: hydrate Redux from URL params then fetch ─────────────────────
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        drawerRef.current &&
-        !drawerRef.current.contains(event.target as Node)
-      ) {
+    const p = Object.fromEntries(searchParams.entries());
+
+    const hydratedFilters = {
+      category:      p.category      || "",
+      city:          p.city          || "",
+      searchQuery:   p.search        || "",
+      minBudget:     Number(p.minBudget)  || 0,
+      maxBudget:     Number(p.maxBudget)  || 0,
+      minArea:       Number(p.minArea)    || 0,
+      maxArea:       Number(p.maxArea)    || 0,
+      bedrooms:      p.bedrooms      ? p.bedrooms.split(",").map(Number) : [],
+      propertyTypes: p.propertyTypes ? p.propertyTypes.split(",") : [],
+      furnishing:    p.furnishing    ? p.furnishing.split(",") : [],
+      postedBy:      p.postedBy      ? p.postedBy.split(",") : [],
+      bathrooms:     p.bathrooms     ? p.bathrooms.split(",").map(Number) : [],
+      amenities:     p.amenities     ? p.amenities.split(",") : [],
+      availableFor:  p.availableFor  ? p.availableFor.split(",") : [],
+      availability:  p.availability  ? p.availability.split(",") : [],
+    };
+
+    dispatch(setFilters(hydratedFilters));
+    if (p.search) setSearchInput(p.search);
+
+    // Fetch using hydrated values directly — Redux state hasn't committed yet
+    dispatch(fetchProperties(buildFetchParams(hydratedFilters as typeof filters)));
+
+    hasMountFetched.current = true;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── On filter change: update URL + re-fetch ────────────────────────────────
+  useEffect(() => {
+    if (!hasMountFetched.current) return;
+
+    const params: Record<string, string> = {};
+    if (filters.category)             params.category      = filters.category;
+    if (filters.city)                 params.city          = filters.city;
+    if (filters.searchQuery)          params.search        = filters.searchQuery;
+    if (filters.minBudget > 0)        params.minBudget     = String(filters.minBudget);
+    if (filters.maxBudget > 0)        params.maxBudget     = String(filters.maxBudget);
+    if (filters.minArea > 0)          params.minArea       = String(filters.minArea);
+    if (filters.maxArea > 0)          params.maxArea       = String(filters.maxArea);
+    if (filters.bedrooms.length)      params.bedrooms      = filters.bedrooms.join(",");
+    if (filters.propertyTypes.length) params.propertyTypes = filters.propertyTypes.join(",");
+    if (filters.furnishing.length)    params.furnishing    = filters.furnishing.join(",");
+    if (filters.postedBy.length)      params.postedBy      = filters.postedBy.join(",");
+    if (filters.bathrooms.length)     params.bathrooms     = filters.bathrooms.join(",");
+    if (filters.amenities.length)     params.amenities     = filters.amenities.join(",");
+    if (filters.availableFor.length)  params.availableFor  = filters.availableFor.join(",");
+    if (filters.availability.length)  params.availability  = filters.availability.join(",");
+
+    setSearchParams(params, { replace: true });
+    dispatch(fetchProperties(buildFetchParams(filters)));
+  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Close drawer on outside click ─────────────────────────────────────────
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target as Node))
         setIsDrawerOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleSearch = () => dispatch(setSearchQuery(searchInput.trim()));
+
+  const hasActiveFilters = Boolean(
+  filters.category || filters.searchQuery || filters.city ||
+  filters.minBudget > 0 || filters.maxBudget > 0 ||
+  filters.minArea > 0   || filters.maxArea > 0   ||
+  filters.bedrooms.length      > 0 || filters.propertyTypes.length > 0 ||
+  filters.furnishing.length    > 0 || filters.postedBy.length      > 0 ||
+  filters.bathrooms.length     > 0 || filters.amenities.length     > 0 ||
+  filters.availableFor.length  > 0 || filters.availability.length  > 0
+);
   return (
     <div className="flex">
-      {/* Sidebar visible only on large screens */}
       <Sidebar />
+      <main className="flex-1 p-4 bg-[#f7f7f7] min-h-screen">
 
-      {/* Content */}
-      <main className="flex-1 p-4 bg-[#f7f7f7]  min-h-screen">
-        
-
-        {/* Search Bar */}
         <div className="flex gap-2 mb-4">
           <div className="flex flex-1 items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 bg-white hover:border-primary transition">
             <FaMapMarkerAlt className="text-primary flex-shrink-0" />
@@ -89,24 +136,17 @@ const SearchPage = () => {
               className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
             />
             {searchInput && (
-              <button
-                onClick={() => { setSearchInput(""); dispatch(setSearchQuery("")); }}
-                className="text-gray-400 hover:text-gray-600 flex-shrink-0"
-              >
+              <button onClick={() => { setSearchInput(""); dispatch(setSearchQuery("")); }}>
                 <IoClose />
               </button>
             )}
           </div>
-          <button
-            onClick={handleSearch}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition"
-          >
+          <button onClick={handleSearch} className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition">
             <FaSearch />
             <span className="hidden sm:inline">Search</span>
           </button>
         </div>
 
-        {/* City filter quick-chips */}
         {filters.city && (
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <span className="text-xs text-gray-500">Showing in:</span>
@@ -118,79 +158,51 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Header with filters button for mobile/tablet */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <h2 className="text-xs md:text-sm text-gray-800">
-              {filteredProperties.length} {filteredProperties.length === 1 ? 'property' : 'properties'} found
+              {total} {total === 1 ? "property" : "properties"} found
             </h2>
             {hasActiveFilters && (
-              <button
-                onClick={() => dispatch(resetFilters())}
-                className="text-xs text-primary underline"
-              >
+              <button onClick={() => dispatch(resetFilters())} className="text-xs text-primary underline">
                 Clear filters
               </button>
             )}
           </div>
-          {/* Filters button - hidden on lg screens */}
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2 bg-blue-50 text-primary rounded-lg transition hover:bg-blue-100"
-          >
+          <button onClick={() => setIsDrawerOpen(true)} className="lg:hidden flex items-center gap-2 px-4 py-2 bg-blue-50 text-primary rounded-lg transition hover:bg-blue-100">
             <BsFilterRight className="text-lg" />
             <span className="text-sm">Filters</span>
           </button>
         </div>
 
-        {/* Responsive grid */}
-        {filteredProperties.length > 0 ? (
+        {properties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => (
-              <PropertyCard key={property._id} property={property} />
-            ))}
+            {properties.map(p => <PropertyCard key={p._id} property={p} />)}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-black">
             <p className="text-lg font-medium">No properties match your filters</p>
-            <button
-              onClick={() => dispatch(resetFilters())}
-              className="mt-3 text-primary underline text-sm"
-            >
+            <button onClick={() => dispatch(resetFilters())} className="mt-3 text-primary underline text-sm">
               Reset all filters
             </button>
           </div>
         )}
       </main>
 
-      {/* Overlay - visible only on mobile/tablet when drawer is open */}
       <div
-        className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300 lg:hidden ${
-          isDrawerOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+        className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300 lg:hidden ${isDrawerOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
         onClick={() => setIsDrawerOpen(false)}
       />
-
-      {/* Sidebar Drawer - visible only on mobile/tablet */}
       <div
         ref={drawerRef}
-        // className={`fixed top-0 left-0 h-full w-72 bg-white z-40 shadow-2xl transform transition-transform duration-300 lg:hidden ${
-        className={`fixed top-0 left-0 h-full w-full bg-white z-40 shadow-2xl transform transition-transform duration-300 lg:hidden ${
-          isDrawerOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-full bg-white z-40 shadow-2xl transform transition-transform duration-300 lg:hidden ${isDrawerOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Close button */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="font-semibold text-lg">Filters</h3>
-          <button
-            onClick={() => setIsDrawerOpen(false)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
+          <button onClick={() => setIsDrawerOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg transition">
             <IoClose className="text-2xl" />
           </button>
         </div>
-
-        {/* Drawer Sidebar Content */}
         <div className="overflow-y-auto h-[calc(100%-60px)] p-4">
           <Sidebar isDrawer={true} />
         </div>

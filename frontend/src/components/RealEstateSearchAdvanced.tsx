@@ -3,14 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { FaSearch, FaMapMarkerAlt, FaChevronDown, FaBuilding, FaSquare } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { MdApartment, MdVilla } from "react-icons/md";
-import { useAppDispatch } from "../store/hooks";
-import {
-  setCategory, setSearchQuery, setCity,
-  setMinBudget, setMaxBudget,
-  toggleBedroom, togglePropertyType,
-  toggleAvailability, setMinArea, setMaxArea,
-  resetFilters,
-} from "../store/slices/filterSlice";
 import DualRangeSlider from "./DualRangeSlider";
 import { AMENITIES_LIST, AVAILABLE_FOR_OPTIONS } from "../assets/assets";
 
@@ -402,7 +394,6 @@ function CheckRow({ label, checked, onChange }: CheckRowProps) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function RealEstateSearchAdvanced() {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   // tabs & basic search
@@ -539,27 +530,44 @@ export default function RealEstateSearchAdvanced() {
   })();
 
   function handleSearch() {
-    dispatch(resetFilters());
-    dispatch(setCategory(activeTab));
-    if (cityLocal) dispatch(setCity(cityLocal));
-    if (query.trim()) dispatch(setSearchQuery(query.trim()));
-    // For sentinel (last index = 0), send 0 to signal "no upper limit"
-    dispatch(setMinBudget(budgetMinVal));
-    dispatch(setMaxBudget(budgetMaxIdx === activeBudgetSteps.length - 1 ? 0 : budgetMaxVal));
-    dispatch(setMinArea(AREA_STEPS_SQFT[areaMinIdx]));
-    dispatch(setMaxArea(areaMaxIdx === AREA_STEPS_SQFT.length - 1 ? 0 : AREA_STEPS_SQFT[areaMaxIdx]));
-    selectedTypes.forEach(t => dispatch(togglePropertyType(t)));
-    selectedBHK.forEach(b => dispatch(toggleBedroom(b)));
-    selectedAvailability.forEach(a => dispatch(toggleAvailability(a)));
-    navigate("/property-search");
-    window.scrollTo(0, 0);
-  }
+      const params = new URLSearchParams();
 
-  function goToCity(c: string) {
-    dispatch(resetFilters());
-    dispatch(setCity(c));
-    navigate("/property-search");
-  }
+      if (activeTab)        params.set("category",  activeTab);
+      if (cityLocal)        params.set("city",       cityLocal);
+      if (query.trim())     params.set("search",     query.trim());
+
+      // Budget — only send if not at defaults
+      if (budgetMinIdx > 0)
+        params.set("minBudget", String(activeBudgetSteps[budgetMinIdx]));
+      if (budgetMaxIdx < activeBudgetSteps.length - 1)
+        params.set("maxBudget", String(activeBudgetSteps[budgetMaxIdx]));
+
+      // Area — only send if not at defaults
+      if (areaMinIdx > 0)
+        params.set("minArea", String(AREA_STEPS_SQFT[areaMinIdx]));
+      if (areaMaxIdx < AREA_STEPS_SQFT.length - 1)
+        params.set("maxArea", String(AREA_STEPS_SQFT[areaMaxIdx]));
+
+      if (selectedTypes.length)        params.set("propertyTypes", selectedTypes.join(","));
+      if (selectedBHK.length)          params.set("bedrooms",      selectedBHK.join(","));
+      if (selectedAvailability.length) params.set("availability",  selectedAvailability.join(","));
+      if (selectedFurnishing.length)   params.set("furnishing",    selectedFurnishing.join(","));
+      if (selectedPostedBy.length)     params.set("postedBy",      selectedPostedBy.join(","));
+      if (selectedBathrooms.length)    params.set("bathrooms",     selectedBathrooms.join(","));
+      if (selectedAvailFor.length)     params.set("availableFor",  selectedAvailFor.join(","));
+      if (selectedAmenities.length)    params.set("amenities",     selectedAmenities.join(","));
+
+      // Navigate to SearchPage with all filters in the URL
+      // SearchPage's mount useEffect will hydrate Redux + fetch from these params
+      navigate(`/property-search?${params.toString()}`);
+      window.scrollTo(0, 0);
+    }
+
+    function goToCity(c: string) {
+      const params = new URLSearchParams();
+      params.set("city", c);
+      navigate(`/property-search?${params.toString()}`);
+    }
 
   return (
     <section

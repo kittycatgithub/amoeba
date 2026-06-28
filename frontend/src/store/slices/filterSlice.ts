@@ -101,6 +101,11 @@ const filterSlice = createSlice({
     setMaxArea: (state, action: PayloadAction<number>) => {
       state.maxArea = action.payload;
     },
+    // Bulk-set any subset of filters — used by SearchPage to hydrate state
+    // from URL query params on mount (so shared links and back-button work).
+    setFilters: (state, action: PayloadAction<Partial<FilterState>>) => {
+      return { ...state, ...action.payload };
+    },
     resetFilters: () => initialState,
   },
 });
@@ -111,6 +116,7 @@ export const {
   toggleBedroom, togglePropertyType, toggleFurnishing,
   togglePostedBy, toggleBathroom, toggleAmenity, toggleAvailableFor,
   toggleAvailability, setMinArea, setMaxArea,
+  setFilters,   // ← new
   resetFilters,
 } = filterSlice.actions;
 

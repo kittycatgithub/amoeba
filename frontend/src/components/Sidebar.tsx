@@ -5,6 +5,19 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   setCity,
   setCategory,
+  toggleBedroom,
+  toggleAvailableFor,
+  togglePostedBy,
+  toggleFurnishing,
+  toggleBathroom,
+  toggleAmenity,
+  toggleAvailability,
+  togglePropertyType,
+  setMinBudget,
+  setMaxBudget,
+  setMinArea,
+  setMaxArea,
+  setFilters,
   // resetFilters,
   // togglePropertyType,
   // toggleBedroom,
@@ -374,6 +387,7 @@ function AccordionSection({
 }) {
   return (
     <>
+      {/* Only the header row is clickable — not the content area */}
       <div
         className="cursor-pointer py-3 select-none"
         onClick={onToggle}
@@ -386,17 +400,17 @@ function AccordionSection({
             }`}
           />
         </div>
-
-        {/* Animated reveal — height transitions from 0 → maxHeight */}
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            open ? maxHeight : "max-h-0"
-          }`}
-        >
-          {/* Spacer so content doesn't crowd the title row */}
-          <div className="pt-2">{children}</div>
-        </div>
       </div>
+
+      {/* Content area is OUTSIDE the clickable div — clicks won't bubble to onToggle */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          open ? maxHeight : "max-h-0"
+        }`}
+      >
+        <div className="pt-2 pb-3">{children}</div>
+      </div>
+
       <hr className="border-gray-100" />
     </>
   );
@@ -485,34 +499,34 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
   // Budget steps change per category (Rent has ₹K steps, Buy has ₹L/Cr steps)
   const activeBudgetSteps = getBudgetSteps(activeCategory);
 
-  // ── Local filter state ───────────────────────────────────────────────────────
-  //
-  // These mirror the selections in RealEstateSearchAdvanced.tsx; when the user
-  // clicks "Apply Filters" they are dispatched to Redux so both the hero bar
-  // and the listing page react to the same state.
-  //
-  const [selectedTypes,        setSelectedTypes]        = useState<string[]>([]);
-  const [selectedBHK,          setSelectedBHK]          = useState<number[]>([]);
-  const [selectedAvailability, setSelectedAvailability] = useState<string[]>([]);
-  const [selectedFurnishing,   setSelectedFurnishing]   = useState<string[]>([]);
-  const [selectedPostedBy,     setSelectedPostedBy]     = useState<string[]>([]);
-  const [selectedBathrooms,    setSelectedBathrooms]    = useState<number[]>([]);
-  const [selectedAvailFor,     setSelectedAvailFor]     = useState<string[]>([]);
-  const [selectedAmenities,    setSelectedAmenities]    = useState<string[]>([]);
-  const [selectedPossYears,    setSelectedPossYears]    = useState<string[]>([]);
+  // Replace the local state declarations + toggle handlers for each filter group.
+  // Pattern: read from Redux, dispatch on change — no local useState needed.
+
+  const selectedBHK          = useAppSelector(s => s.filters.bedrooms);
+  const selectedAvailability = useAppSelector(s => s.filters.availability);
+  const selectedFurnishing   = useAppSelector(s => s.filters.furnishing);
+  const selectedPostedBy     = useAppSelector(s => s.filters.postedBy);
+  const selectedBathrooms    = useAppSelector(s => s.filters.bathrooms);
+  const selectedAvailFor     = useAppSelector(s => s.filters.availableFor);
+  const selectedAmenities    = useAppSelector(s => s.filters.amenities);
+  const selectedTypes        = useAppSelector(s => s.filters.propertyTypes);
 
   // Budget — index-based into activeBudgetSteps (same approach as the hero bar)
   const [budgetMinIdx, setBudgetMinIdx] = useState(0);
   const [budgetMaxIdx, setBudgetMaxIdx] = useState(activeBudgetSteps.length - 1);
 
+  const safeBudgetMinIdx = Math.min(budgetMinIdx, activeBudgetSteps.length - 1);
+  const safeBudgetMaxIdx = Math.min(budgetMaxIdx, activeBudgetSteps.length - 1);
+
   // Area — index-based into AREA_STEPS_SQFT
   const [areaMinIdx, setAreaMinIdx] = useState(0);
   const [areaMaxIdx, setAreaMaxIdx] = useState(AREA_STEPS_SQFT.length - 1);
+  const [selectedPossYears, setSelectedPossYears] = useState<string[]>([]);
 
   // ── Accordion open / close state ────────────────────────────────────────────
 
   // const [openPropertyType,    setOpenPropertyType]    = useState(false);
-  const [_,    setOpenPropertyType]    = useState(false);
+  // const [, setOpenPropertyType] = useState(false);
   const [openBudget,          setOpenBudget]          = useState(false);
   const [openArea,            setOpenArea]            = useState(false);
   const [openBHK,             setOpenBHK]             = useState(false);
@@ -533,109 +547,46 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
   //   3. Collapse all accordions to give the user a clean slate.
   // ──────────────────────────────────────────────────────────────────────────────
 
-  function handleCategoryChange(cat: string) {
-    dispatch(setCategory(cat));
+// Sidebar.tsx — handleCategoryChange
+function handleCategoryChange(cat: string) {
+  dispatch(setCategory(cat));
 
-    // Reset all local selections
-    setSelectedTypes([]);
-    setSelectedBHK([]);
-    setSelectedAvailability([]);
-    setSelectedFurnishing([]);
-    setSelectedPostedBy([]);
-    setSelectedBathrooms([]);
-    setSelectedAvailFor([]);
-    setSelectedAmenities([]);
-    setSelectedPossYears([]);
+  // Reset all Redux filter arrays when category changes
+  dispatch(setFilters({
+    category:      cat,
+    propertyTypes: [],
+    bedrooms:      [],
+    availability:  [],
+    furnishing:    [],
+    postedBy:      [],
+    bathrooms:     [],
+    availableFor:  [],
+    amenities:     [],
+    minBudget:     0,
+    maxBudget:     0,
+    minArea:       0,
+    maxArea:       0,
+  }));
 
-    // Reset budget indices for the NEW category's step array
-    const newSteps = getBudgetSteps(cat);
-    setBudgetMinIdx(0);
-    setBudgetMaxIdx(newSteps.length - 1);
+  // Reset local slider indices for the new category's step array
+  const newSteps = getBudgetSteps(cat);
+  setBudgetMinIdx(0);
+  setBudgetMaxIdx(newSteps.length - 1);
+  setAreaMinIdx(0);
+  setAreaMaxIdx(AREA_STEPS_SQFT.length - 1);
 
-    // Reset area indices
-    setAreaMinIdx(0);
-    setAreaMaxIdx(AREA_STEPS_SQFT.length - 1);
-
-    // Collapse all accordions
-    setOpenPropertyType(false);
-    setOpenBudget(false);
-    setOpenArea(false);
-    setOpenBHK(false);
-    setOpenPossession(false);
-    setOpenAvailableFor(false);
-    setOpenPostedBy(false);
-    setOpenFurnishing(false);
-    setOpenBathrooms(false);
-    setOpenAmenities(false);
-    setOpenPossessionYear(false);
-  }
-
-  // ── Apply filters → dispatch everything to Redux ──────────────────────────────
-  //
-  // Mirrors the dispatch sequence in handleSearch() from RealEstateSearchAdvanced.tsx.
-  // For the max-sentinel (last index, value = 0) we send 0 to signal "no upper limit".
-  // ──────────────────────────────────────────────────────────────────────────────
-
-  // function handleApply() {
-  //   const budgetMinVal = activeBudgetSteps[budgetMinIdx];
-  //   const budgetMaxVal = activeBudgetSteps[budgetMaxIdx];
-  //   const isMaxSentinel = budgetMaxIdx === activeBudgetSteps.length - 1;
-
-  //   dispatch(setMinBudget(budgetMinVal));
-  //   dispatch(setMaxBudget(isMaxSentinel ? 0 : budgetMaxVal));
-
-  //   const isAreaMaxSentinel = areaMaxIdx === AREA_STEPS_SQFT.length - 1;
-  //   dispatch(setMinArea(AREA_STEPS_SQFT[areaMinIdx]));
-  //   dispatch(setMaxArea(isAreaMaxSentinel ? 0 : AREA_STEPS_SQFT[areaMaxIdx]));
-
-  //   selectedTypes.forEach((t)  => dispatch(togglePropertyType(t)));
-  //   selectedBHK.forEach((b)    => dispatch(toggleBedroom(b)));
-  //   selectedAvailability.forEach((a) => dispatch(toggleAvailability(a)));
-  // }
-
-  // ── Reset everything ─────────────────────────────────────────────────────────
-  //
-  // Resets the Redux slice (city, category, all filters) AND local state so
-  // the sidebar visually clears too.
-  // ──────────────────────────────────────────────────────────────────────────────
-
-  // function handleReset() {
-  //   dispatch(resetFilters());
-
-  //   setSelectedTypes([]);
-  //   setSelectedBHK([]);
-  //   setSelectedAvailability([]);
-  //   setSelectedFurnishing([]);
-  //   setSelectedPostedBy([]);
-  //   setSelectedBathrooms([]);
-  //   setSelectedAvailFor([]);
-  //   setSelectedAmenities([]);
-  //   setSelectedPossYears([]);
-
-  //   setBudgetMinIdx(0);
-  //   setBudgetMaxIdx(getBudgetSteps("Buy").length - 1);
-  //   setAreaMinIdx(0);
-  //   setAreaMaxIdx(AREA_STEPS_SQFT.length - 1);
-  // }
-
-  // ── Derived display values ───────────────────────────────────────────────────
-
-  // const budgetActive   = budgetMinIdx > 0 || budgetMaxIdx < activeBudgetSteps.length - 1;
-  // const areaActive     = areaMinIdx  > 0 || areaMaxIdx   < AREA_STEPS_SQFT.length - 1;
-
-  // Count active filters for the summary badge at the top
-  // const activeFilterCount =
-  //   selectedTypes.length +
-  //   selectedBHK.length +
-  //   selectedAvailability.length +
-  //   selectedFurnishing.length +
-  //   selectedPostedBy.length +
-  //   selectedBathrooms.length +
-  //   selectedAvailFor.length +
-  //   selectedAmenities.length +
-  //   selectedPossYears.length +
-  //   (budgetActive ? 1 : 0) +
-  //   (areaActive   ? 1 : 0);
+  // Collapse all accordions
+  setOpenBudget(false);
+  setOpenArea(false);
+  setOpenBHK(false);
+  setOpenPossession(false);
+  setOpenAvailableFor(false);
+  setOpenPostedBy(false);
+  setOpenFurnishing(false);
+  setOpenBathrooms(false);
+  setOpenAmenities(false);
+  setOpenPossessionYear(false);
+}
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -735,9 +686,11 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
         </label>
         <select
           value={selectedTypes[0] ?? ""}
-          onChange={(e) =>
-            setSelectedTypes(e.target.value ? [e.target.value] : [])
-          }
+          onChange={(e) => {
+            // clear old selection then set new one
+            selectedTypes.forEach(t => dispatch(togglePropertyType(t)));
+            if (e.target.value) dispatch(togglePropertyType(e.target.value));
+          }}
           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 bg-white transition cursor-pointer"
         >
           <option value="">All Types</option>
@@ -751,152 +704,6 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
       </div>
     )}
 
-    {/* ── Budget / Rent Range ───────────────────────────────────────────────
-    Dual range slider — min and max thumbs over the active step array.
-    Step arrays differ per category:
-      • Buy / Commercial Buy  → ₹5 L steps up to 2 Cr
-      • Rent                  → ₹2 K steps up to 1 L
-      • Commercial Rent       → ₹5 K steps up to 1 L
-      • Plots/Land            → ₹1 L steps up to 10 Cr
-───────────────────────────────────────────────────────────────────────── */}
-{/* {vis.budget && (
-  <AccordionSection
-    title={
-      activeCategory === "Rent" || activeCategory === "Commercial Rent"
-        ? "Rent Range"
-        : "Budget"
-    }
-    open={openBudget}
-    onToggle={() => setOpenBudget((v) => !v)}
-  >
-    <p className="text-xs text-blue-600 font-medium mb-3">
-      {formatBudget(activeBudgetSteps[budgetMinIdx], false, activeCategory)}
-      {" – "}
-      {budgetMaxIdx === activeBudgetSteps.length - 1
-        ? BUDGET_MAX_LABEL[activeCategory]
-        : formatBudget(activeBudgetSteps[budgetMaxIdx], true, activeCategory)}
-    </p>
-
-    <div className="space-y-1 mb-3">
-      <div className="flex justify-between text-[10px] text-gray-400">
-        <span>Min</span>
-        <span>{formatBudget(activeBudgetSteps[budgetMinIdx], false, activeCategory)}</span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={activeBudgetSteps.length - 1}
-        value={budgetMinIdx}
-        onChange={(e) => {
-          const val = Number(e.target.value);
-          setBudgetMinIdx(val);
-          if (val > budgetMaxIdx) setBudgetMaxIdx(val);
-        }}
-        className="w-full h-1.5 rounded-full accent-blue-600 cursor-pointer"
-      />
-    </div>
-
-    <div className="space-y-1 mb-3">
-      <div className="flex justify-between text-[10px] text-gray-400">
-        <span>Max</span>
-        <span>
-          {budgetMaxIdx === activeBudgetSteps.length - 1
-            ? BUDGET_MAX_LABEL[activeCategory]
-            : formatBudget(activeBudgetSteps[budgetMaxIdx], true, activeCategory)}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={activeBudgetSteps.length - 1}
-        value={budgetMaxIdx}
-        onChange={(e) => {
-          const val = Number(e.target.value);
-          setBudgetMaxIdx(val);
-          if (val < budgetMinIdx) setBudgetMinIdx(val);
-        }}
-        className="w-full h-1.5 rounded-full accent-blue-600 cursor-pointer"
-      />
-    </div>
-
-    <div className="flex flex-wrap gap-1.5">
-      {(() => {
-        const steps   = activeBudgetSteps;
-        const lastIdx = steps.length - 1;
-        const findIdx = (target: number) => {
-          const i = steps.indexOf(target);
-          return i === -1 ? lastIdx : i;
-        };
-
-        type Preset = { label: string; min: number; max: number };
-        let presets: Preset[] = [];
-
-        switch (activeCategory) {
-          case "Buy":
-          case "Commercial Buy":
-            presets = [
-              { label: "Under 50 L",  min: 0,                  max: findIdx(5_000_000)  },
-              { label: "50 L – 1 Cr", min: findIdx(5_000_000), max: findIdx(10_000_000) },
-              { label: "1 – 2 Cr",    min: findIdx(10_000_000),max: lastIdx             },
-              { label: "2 Cr+",       min: findIdx(20_000_000),max: lastIdx             },
-            ];
-            break;
-          case "Rent":
-            presets = [
-              { label: "Under 10K", min: 0,               max: findIdx(10_000) },
-              { label: "10K – 25K", min: findIdx(10_000), max: findIdx(25_000) },
-              { label: "25K – 50K", min: findIdx(25_000), max: findIdx(50_000) },
-              { label: "50K+",      min: findIdx(50_000), max: lastIdx         },
-            ];
-            break;
-          case "Commercial Rent":
-            presets = [
-              { label: "Under 25K",  min: 0,                max: findIdx(25_000)  },
-              { label: "25K – 50K",  min: findIdx(25_000),  max: findIdx(50_000)  },
-              { label: "50K – 1 L",  min: findIdx(50_000),  max: findIdx(100_000) },
-              { label: "1 L+",       min: findIdx(100_000), max: lastIdx          },
-            ];
-            break;
-          case "Plots/Land":
-            presets = [
-              { label: "Under 50 L",  min: 0,                   max: findIdx(5_000_000)  },
-              { label: "50 L – 1 Cr", min: findIdx(5_000_000),  max: findIdx(10_000_000) },
-              { label: "1 – 5 Cr",    min: findIdx(10_000_000), max: findIdx(50_000_000) },
-              { label: "5 Cr+",       min: findIdx(50_000_000), max: lastIdx             },
-            ];
-            break;
-          default:
-            presets = [
-              { label: "Under 50 L",  min: 0,                          max: Math.floor(lastIdx * 0.25) },
-              { label: "50 L – 1 Cr", min: Math.floor(lastIdx * 0.25), max: Math.floor(lastIdx * 0.5)  },
-              { label: "1 – 2 Cr",    min: Math.floor(lastIdx * 0.5),  max: Math.floor(lastIdx * 0.75) },
-              { label: "2 Cr+",       min: Math.floor(lastIdx * 0.75), max: lastIdx                    },
-            ];
-        }
-
-        return presets.map((p) => (
-          <button
-            key={p.label}
-            onClick={() => { setBudgetMinIdx(p.min); setBudgetMaxIdx(p.max); }}
-            className="px-2.5 py-1 rounded-full border border-gray-200 text-[11px] text-gray-600 hover:border-blue-400 hover:text-blue-600 transition"
-          >
-            {p.label}
-          </button>
-        ));
-      })()}
-    </div>
-
-    {budgetActive && (
-      <button
-        onClick={() => { setBudgetMinIdx(0); setBudgetMaxIdx(activeBudgetSteps.length - 1); }}
-        className="mt-2 text-xs text-red-500 hover:underline"
-      >
-        Clear budget
-      </button>
-    )}
-  </AccordionSection>
-)} */}
-
 {vis.budget && (
   <AccordionSection
     title={activeCategory === "Rent" || activeCategory === "Commercial Rent" ? "Rent Range" : "Budget"}
@@ -905,114 +712,33 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
   >
     {/* Live range label */}
     <p className="text-xs text-primary font-medium mb-4">
-      {formatBudget(activeBudgetSteps[budgetMinIdx], false, activeCategory)}
+      {formatBudget(activeBudgetSteps[safeBudgetMinIdx], false, activeCategory)}
       {" – "}
-      {budgetMaxIdx === activeBudgetSteps.length - 1
+      {safeBudgetMaxIdx === activeBudgetSteps.length - 1
         ? BUDGET_MAX_LABEL[activeCategory]
-        : formatBudget(activeBudgetSteps[budgetMaxIdx], true, activeCategory)}
+        : formatBudget(activeBudgetSteps[safeBudgetMaxIdx], true, activeCategory)}
     </p>
 
     {/* ← Single dual-thumb slider replaces the two separate sliders */}
     <RangeSlider
       min={0}
       max={activeBudgetSteps.length - 1}
-      minVal={budgetMinIdx}
-      maxVal={budgetMaxIdx}
-      onMinChange={(val) => setBudgetMinIdx(val)}
-      onMaxChange={(val) => setBudgetMaxIdx(val)}
+      minVal={safeBudgetMinIdx}
+      maxVal={safeBudgetMaxIdx}
+      onMinChange={(val) => {
+        setBudgetMinIdx(val);
+        dispatch(setMinBudget(activeBudgetSteps[val]));
+      }}
+      onMaxChange={(val) => {
+        setBudgetMaxIdx(val);
+        const isMax = val === activeBudgetSteps.length - 1;
+        dispatch(setMaxBudget(isMax ? 0 : activeBudgetSteps[val]));
+      }}
     />
 
     {/* Quick preset chips — unchanged */}
   </AccordionSection>
 )}
-
-{/* ── Area Range ────────────────────────────────────────────────────────
-    Dual range slider over AREA_STEPS_SQFT.
-    index 0 = "No min", last index = "No max".
-───────────────────────────────────────────────────────────────────────── */}
-{/* {vis.area && (
-  <AccordionSection
-    title="Area (Sq.Ft)"
-    open={openArea}
-    onToggle={() => setOpenArea((v) => !v)}
-  >
-    <p className="text-xs text-blue-600 font-medium mb-3">
-      {formatAreaSqft(AREA_STEPS_SQFT[areaMinIdx], false)}
-      {" – "}
-      {areaMaxIdx === AREA_STEPS_SQFT.length - 1
-        ? "No max"
-        : formatAreaSqft(AREA_STEPS_SQFT[areaMaxIdx], true)}
-    </p>
-
-    <div className="space-y-1 mb-3">
-      <div className="flex justify-between text-[10px] text-gray-400">
-        <span>Min</span>
-        <span>{formatAreaSqft(AREA_STEPS_SQFT[areaMinIdx], false)}</span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={AREA_STEPS_SQFT.length - 1}
-        value={areaMinIdx}
-        onChange={(e) => {
-          const val = Number(e.target.value);
-          setAreaMinIdx(val);
-          if (val > areaMaxIdx) setAreaMaxIdx(val);
-        }}
-        className="w-full h-1.5 rounded-full accent-blue-600 cursor-pointer"
-      />
-    </div>
-
-    <div className="space-y-1 mb-3">
-      <div className="flex justify-between text-[10px] text-gray-400">
-        <span>Max</span>
-        <span>
-          {areaMaxIdx === AREA_STEPS_SQFT.length - 1
-            ? "No max"
-            : formatAreaSqft(AREA_STEPS_SQFT[areaMaxIdx], true)}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={AREA_STEPS_SQFT.length - 1}
-        value={areaMaxIdx}
-        onChange={(e) => {
-          const val = Number(e.target.value);
-          setAreaMaxIdx(val);
-          if (val < areaMinIdx) setAreaMinIdx(val);
-        }}
-        className="w-full h-1.5 rounded-full accent-blue-600 cursor-pointer"
-      />
-    </div>
-
-    <div className="flex flex-wrap gap-1.5">
-      {[
-        { label: "< 1000",  min: 0,  max: 4  },
-        { label: "1K – 2K", min: 4,  max: 7  },
-        { label: "2K – 5K", min: 7,  max: 11 },
-        { label: "5K+",     min: 11, max: AREA_STEPS_SQFT.length - 1 },
-      ].map((p) => (
-        <button
-          key={p.label}
-          onClick={() => { setAreaMinIdx(p.min); setAreaMaxIdx(p.max); }}
-          className="px-2.5 py-1 rounded-full border border-gray-200 text-[11px] text-gray-600 hover:border-blue-400 hover:text-blue-600 transition"
-        >
-          {p.label}
-        </button>
-      ))}
-    </div>
-
-    {areaActive && (
-      <button
-        onClick={() => { setAreaMinIdx(0); setAreaMaxIdx(AREA_STEPS_SQFT.length - 1); }}
-        className="mt-2 text-xs text-red-500 hover:underline"
-      >
-        Clear area
-      </button>
-    )}
-  </AccordionSection>
-)} */}
 
 {vis.area && (
   <AccordionSection
@@ -1034,8 +760,15 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
       max={AREA_STEPS_SQFT.length - 1}
       minVal={areaMinIdx}
       maxVal={areaMaxIdx}
-      onMinChange={(val) => setAreaMinIdx(val)}
-      onMaxChange={(val) => setAreaMaxIdx(val)}
+      onMinChange={(val) => {
+        setAreaMinIdx(val);
+        dispatch(setMinArea(AREA_STEPS_SQFT[val]));
+      }}
+      onMaxChange={(val) => {
+        setAreaMaxIdx(val);
+        const isMax = val === AREA_STEPS_SQFT.length - 1;
+        dispatch(setMaxArea(isMax ? 0 : AREA_STEPS_SQFT[val]));
+      }}
     />
 
     {/* Quick preset chips — unchanged */}
@@ -1059,9 +792,7 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
                   key={opt.value}
                   label={opt.label}
                   active={selectedBHK.includes(opt.value)}
-                  onClick={() =>
-                    setSelectedBHK((prev) => toggle(prev, opt.value))
-                  }
+                  onClick={() => dispatch(toggleBedroom(opt.value))}
                 />
               ))}
             </div>
@@ -1084,9 +815,7 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
                   key={a}
                   label={a}
                   checked={selectedAvailability.includes(a)}
-                  onChange={() =>
-                    setSelectedAvailability((prev) => toggle(prev, a))
-                  }
+                  onChange={() => dispatch(toggleAvailability(a))}
                 />
               ))}
             </div>
@@ -1134,9 +863,7 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
                   key={a}
                   label={a}
                   checked={selectedAvailFor.includes(a)}
-                  onChange={() =>
-                    setSelectedAvailFor((prev) => toggle(prev, a))
-                  }
+                  onChange={() => dispatch(toggleAvailableFor(a))}
                 />
               ))}
             </div>
@@ -1159,9 +886,7 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
                   key={p}
                   label={p}
                   checked={selectedPostedBy.includes(p)}
-                  onChange={() =>
-                    setSelectedPostedBy((prev) => toggle(prev, p))
-                  }
+                  onChange={() => dispatch(togglePostedBy(p))}
                 />
               ))}
             </div>
@@ -1184,9 +909,7 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
                   key={f}
                   label={f}
                   checked={selectedFurnishing.includes(f)}
-                  onChange={() =>
-                    setSelectedFurnishing((prev) => toggle(prev, f))
-                  }
+                  onChange={() => dispatch(toggleFurnishing(f))}
                 />
               ))}
             </div>
@@ -1210,9 +933,7 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
                   key={b}
                   label={b === 4 ? "4+" : String(b)}
                   active={selectedBathrooms.includes(b)}
-                  onClick={() =>
-                    setSelectedBathrooms((prev) => toggle(prev, b))
-                  }
+                  onClick={() => dispatch(toggleBathroom(b))}
                 />
               ))}
             </div>
@@ -1237,9 +958,7 @@ const Sidebar = ({ isDrawer = false }: { isDrawer?: boolean }) => {
                   key={a}
                   label={a}
                   active={selectedAmenities.includes(a)}
-                  onClick={() =>
-                    setSelectedAmenities((prev) => toggle(prev, a))
-                  }
+                  onClick={() => dispatch(toggleAmenity(a))}
                 />
               ))}
             </div>

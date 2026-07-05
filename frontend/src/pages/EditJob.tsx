@@ -1,59 +1,62 @@
-// AddJob.tsx
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { INDIAN_STATES, STATE_CITIES } from "../assets/assets";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import { createJobApi } from "../api/jobApi";
+import { getJobApi, updateJobApi } from "../api/jobApi";
+import { motion } from "framer-motion";
 import JoditEditor from "jodit-react";
-
-// Types
-interface JobFormData {
-  title: string;
-  description: string;
-  skills: string[];
-  status: "open" | "closed";
-  location: "remote" | "hybrid" | "on-site";
-  workLocation: { city: string; state: string }; // was `{ city: '', state: '' },` — invalid
-  salaryRange: {
-    min: number | null;
-    max: number | null;
-  };
-  ctc: number | null;
-  jobTypes: string[];
-}
 
 interface JobTypeOption {
   value: string;
   label: string;
 }
 
-const AddJob: React.FC = () => {
-  const navigate = useNavigate();
+interface FormState {
+  title: string;
+  description: string;
+  skills: string[];
+  status: "open" | "closed";
+  location: "remote" | "hybrid" | "on-site";
+  workLocation: { city: string; state: string };
+  salaryRange: { min: number | null; max: number | null };
+  ctc: number | null;
+  jobTypes: string[];
+}
+
+const initialForm: FormState = {
+  title: "",
+  description: "",
+  skills: [""],
+  status: "open",
+  location: "remote",
+  workLocation: { city: "", state: "" },
+  salaryRange: { min: null, max: null },
+  ctc: null,
+  jobTypes: [],
+};
+
+const jobTypeOptions: JobTypeOption[] = [
+  { value: "contractual", label: "Contractual / Temporary" },
+  { value: "freelance", label: "Freelance" },
+  { value: "part-time", label: "Part-time" },
+  { value: "full-time", label: "Full-time" },
+  { value: "internship", label: "Internship" },
+  { value: "volunteer", label: "Volunteer" },
+];
+
+const EditJob = () => {
+  const { id } = useParams<{ id: string }>();
   const { user, setShowUserLogin } = useAppContext();
+  const navigate = useNavigate();
 
-  // Form state
-  const [formData, setFormData] = useState<JobFormData>({
-    title: "",
-    description: "",
-    skills: [""],
-    status: "open",
-    location: "remote",
-    workLocation: { city: "", state: "" },
-    salaryRange: {
-      min: null,
-      max: null,
-    },
-    ctc: null,
-    jobTypes: [],
-  });
-
+  const [form, setForm] = useState<FormState>(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isJobTypeOpen, setIsJobTypeOpen] = useState(false);
-  const jobTypeRef = useRef<HTMLDivElement>(null);
+  const jobTypeRef = React.useRef<HTMLDivElement>(null);
 
-  // Close the job type dropdown when clicking outside of it
+  // Close job type dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -67,23 +70,47 @@ const AddJob: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Job types options
-  const jobTypeOptions: JobTypeOption[] = [
-    { value: "contractual", label: "Contractual / Temporary" },
-    { value: "freelance", label: "Freelance" },
-    { value: "part-time", label: "Part-time" },
-    { value: "full-time", label: "Full-time" },
-    { value: "internship", label: "Internship" },
-    { value: "volunteer", label: "Volunteer" },
-  ];
+  // Fetch job data on mount
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        const { data } = await getJobApi(id!);
+        const job = data.job;
+
+        setForm({
+          title: job.title || "",
+          description: job.description || "",
+          skills: job.skills && job.skills.length > 0 ? job.skills : [""],
+          status: job.status || "open",
+          location: job.location || "remote",
+          workLocation: {
+            city: job.workLocation?.city || "",
+            state: job.workLocation?.state || "",
+          },
+          salaryRange: {
+            min: job.salaryRange?.min ?? null,
+            max: job.salaryRange?.max ?? null,
+          },
+          ctc: job.ctc ?? null,
+          jobTypes: job.jobTypes || [],
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch job:", error);
+        toast.error("Failed to load job");
+        navigate("/my-jobs");
+      }
+    };
+
+    if (id) fetchJob();
+  }, [id, navigate]);
 
   // Jodit config — memoized so the editor doesn't re-init on every render
   const editorConfig = useMemo(
     () => ({
       readonly: false,
       height: 300,
-      placeholder:
-        "Describe the job responsibilities, requirements, and benefits...",
+      placeholder: "Write the job description...",
       buttons: [
         "bold",
         "italic",
@@ -101,120 +128,69 @@ const AddJob: React.FC = () => {
     [],
   );
 
-  // Handle text input changes
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const set = <K extends keyof FormState>(field: K, value: FormState[K]) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
-  // Handle salary range changes
-  const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleSalaryChange = (field: "min" | "max", value: string) => {
     const numValue = value === "" ? null : Number(value);
-    setFormData((prev) => ({
+    setForm((prev) => ({
       ...prev,
-      salaryRange: {
-        ...prev.salaryRange,
-        [name]: numValue,
-      },
+      salaryRange: { ...prev.salaryRange, [field]: numValue },
     }));
-  };
-
-  // Handle CTC change
-  const handleCTCChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === "" ? null : Number(e.target.value);
-    setFormData((prev) => ({
-      ...prev,
-      ctc: value,
-    }));
-  };
-
-  // Skills management
-  const handleSkillChange = (index: number, value: string) => {
-    const newSkills = [...formData.skills];
-    newSkills[index] = value;
-    setFormData((prev) => ({
-      ...prev,
-      skills: newSkills,
-    }));
-  };
-
-  const addSkillRow = () => {
-    setFormData((prev) => ({
-      ...prev,
-      skills: [...prev.skills, ""],
-    }));
-  };
-
-  const removeSkillRow = (index: number) => {
-    if (formData.skills.length > 1) {
-      const newSkills = formData.skills.filter((_, i) => i !== index);
-      setFormData((prev) => ({
-        ...prev,
-        skills: newSkills,
-      }));
-    }
-  };
-
-  // Description change handler for Jodit
-  const handleDescriptionChange = (newContent: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      description: newContent,
-    }));
-  };
-
-  // Job type multiselect handling
-  const handleJobTypeToggle = (value: string) => {
-    setFormData((prev) => {
-      const currentTypes = prev.jobTypes;
-      const newTypes = currentTypes.includes(value)
-        ? currentTypes.filter((type) => type !== value)
-        : [...currentTypes, value];
-      return {
-        ...prev,
-        jobTypes: newTypes,
-      };
-    });
   };
 
   const handleStateChange = (value: string) => {
-    setFormData((prev) => ({
+    setForm((prev) => ({
       ...prev,
       workLocation: { state: value, city: "" },
     }));
   };
 
   const handleCityChange = (value: string) => {
-    setFormData((prev) => ({
+    setForm((prev) => ({
       ...prev,
       workLocation: { ...prev.workLocation, city: value },
     }));
   };
 
-  // Form submission
+  const handleSkillChange = (index: number, value: string) => {
+    const newSkills = [...form.skills];
+    newSkills[index] = value;
+    set("skills", newSkills);
+  };
+
+  const addSkillRow = () => set("skills", [...form.skills, ""]);
+
+  const removeSkillRow = (index: number) => {
+    if (form.skills.length > 1) {
+      set(
+        "skills",
+        form.skills.filter((_, i) => i !== index),
+      );
+    }
+  };
+
+  const handleJobTypeToggle = (value: string) => {
+    setForm((prev) => {
+      const newTypes = prev.jobTypes.includes(value)
+        ? prev.jobTypes.filter((t) => t !== value)
+        : [...prev.jobTypes, value];
+      return { ...prev, jobTypes: newTypes };
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
-      setShowUserLogin(true);
-      return;
-    }
-
-    if (!formData.title.trim()) {
+    if (!form.title.trim()) {
       toast.error("Job title is required");
       return;
     }
-    if (formData.jobTypes.length === 0) {
+    if (form.jobTypes.length === 0) {
       toast.error("Select at least one job type");
       return;
     }
-    const cleanSkills = formData.skills.map((s) => s.trim()).filter(Boolean);
+    const cleanSkills = form.skills.map((s) => s.trim()).filter(Boolean);
     if (cleanSkills.length === 0) {
       toast.error("Add at least one skill");
       return;
@@ -222,24 +198,49 @@ const AddJob: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const payload = {
-        ...formData,
-        skills: cleanSkills,
-      };
-      await createJobApi(payload);
-      toast.success("Job posted successfully!");
+      const payload = { ...form, skills: cleanSkills };
+      await updateJobApi(id!, payload);
+      toast.success("Job updated successfully!");
       navigate("/my-jobs");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to post job");
+      toast.error(err.response?.data?.message || "Failed to update job");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ─── Style helpers (Tailwind, mirroring AddProperty.tsx conventions) ───────
+  if (!user) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">💼</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Login to Edit Job
+          </h2>
+          <p className="text-gray-500 mb-6">
+            You need to be logged in to edit your job posting.
+          </p>
+          <button
+            onClick={() => setShowUserLogin(true)}
+            className="px-8 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary-dull transition"
+          >
+            Login / Sign Up
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4">
+        <p className="text-gray-500 text-lg">Loading job...</p>
+      </div>
+    );
+  }
+
   const inputCls =
     "w-full px-3 py-2.5 rounded-lg border border-gray-300 outline-none text-sm transition focus:border-primary bg-white";
-
   const labelCls = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
@@ -247,18 +248,18 @@ const AddJob: React.FC = () => {
       {/* Hero */}
       <div className="relative w-full h-[20vh] md:h-[30vh] min-h-[20vh]">
         <img
-          src="/images/panoramic.jpg"
-          alt="Background Image"
+          src="/pageImg.jpg"
+          alt="Background"
           className="object-cover object-center w-full h-full"
         />
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center px-4 text-center">
           <motion.h1
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -110 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 2 }}
             className="text-white text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6"
           >
-            Post Job
+            Edit Job
           </motion.h1>
         </div>
       </div>
@@ -266,40 +267,35 @@ const AddJob: React.FC = () => {
       <div className="max-w-4xl mx-auto py-10 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Post a <span className="text-primary-dull">Job</span>
+            Edit Your <span className="text-primary-dull">Job Posting</span>
           </h1>
-          <p className="text-gray-500 mt-1">
-            Fill in the details below to list your job opening
-          </p>
+          <p className="text-gray-500 mt-1">Update the details below</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2">
           {/* ── Title ── */}
           <div className="bg-white rounded-2xl p-3 md:p-6 shadow-sm border border-gray-100">
-            <div>
-              <label htmlFor="title" className={labelCls}>
-                Job Title *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                required
-                className={inputCls}
-                placeholder="e.g., Senior Real Estate Agent"
-              />
-            </div>
+            <label htmlFor="title" className={labelCls}>
+              Job Title *
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={form.title}
+              onChange={(e) => set("title", e.target.value)}
+              required
+              className={inputCls}
+              placeholder="e.g., Senior Real Estate Agent"
+            />
           </div>
 
           {/* ── Description (Jodit) ── */}
-          <div className="job-description-content  bg-white rounded-2xl p-3 md:p-6 shadow-sm border border-gray-100">
+          <div className="job-description-content bg-white rounded-2xl p-3 md:p-6 shadow-sm border border-gray-100">
             <label className={labelCls}>Job Description *</label>
             <JoditEditor
-              value={formData.description}
+              value={form.description}
               config={editorConfig}
-              onBlur={handleDescriptionChange}
+              onBlur={(newContent) => set("description", newContent)}
             />
           </div>
 
@@ -308,7 +304,7 @@ const AddJob: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
               Skills Required
             </h2>
-            {formData.skills.map((skill, index) => (
+            {form.skills.map((skill, index) => (
               <div key={index} className="flex items-center gap-2 mb-2">
                 <input
                   type="text"
@@ -318,7 +314,7 @@ const AddJob: React.FC = () => {
                   placeholder={`Skill ${index + 1}`}
                   required
                 />
-                {formData.skills.length > 1 && (
+                {form.skills.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeSkillRow(index)}
@@ -347,9 +343,10 @@ const AddJob: React.FC = () => {
                 </label>
                 <select
                   id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
+                  value={form.status}
+                  onChange={(e) =>
+                    set("status", e.target.value as FormState["status"])
+                  }
                   className={inputCls}
                 >
                   <option value="open">Open</option>
@@ -362,9 +359,10 @@ const AddJob: React.FC = () => {
                 </label>
                 <select
                   id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
+                  value={form.location}
+                  onChange={(e) =>
+                    set("location", e.target.value as FormState["location"])
+                  }
                   className={inputCls}
                 >
                   <option value="remote">Remote</option>
@@ -376,7 +374,6 @@ const AddJob: React.FC = () => {
           </div>
 
           {/* ── City / State ── */}
-          {/* ── City / State ── */}
           <div className="bg-white rounded-2xl p-3 md:p-6 shadow-sm border border-gray-100">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -385,7 +382,7 @@ const AddJob: React.FC = () => {
                 </label>
                 <select
                   id="state"
-                  value={formData.workLocation.state}
+                  value={form.workLocation.state}
                   onChange={(e) => handleStateChange(e.target.value)}
                   className={inputCls}
                 >
@@ -404,23 +401,21 @@ const AddJob: React.FC = () => {
                 </label>
                 <select
                   id="city"
-                  value={formData.workLocation.city}
+                  value={form.workLocation.city}
                   onChange={(e) => handleCityChange(e.target.value)}
                   className={inputCls}
-                  disabled={!formData.workLocation.state}
+                  disabled={!form.workLocation.state}
                 >
                   <option value="">
-                    {formData.workLocation.state
+                    {form.workLocation.state
                       ? "Select city..."
                       : "Select state first"}
                   </option>
-                  {(STATE_CITIES[formData.workLocation.state] || []).map(
-                    (city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ),
-                  )}
+                  {(STATE_CITIES[form.workLocation.state] || []).map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -432,15 +427,11 @@ const AddJob: React.FC = () => {
               <label className={labelCls}>Salary Range (Optional)</label>
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label htmlFor="min" className="block text-xs text-gray-500">
-                    Minimum
-                  </label>
+                  <label className="block text-xs text-gray-500">Minimum</label>
                   <input
                     type="number"
-                    id="min"
-                    name="min"
-                    value={formData.salaryRange.min ?? ""}
-                    onChange={handleSalaryChange}
+                    value={form.salaryRange.min ?? ""}
+                    onChange={(e) => handleSalaryChange("min", e.target.value)}
                     className={inputCls}
                     placeholder="e.g., 50000"
                     min="0"
@@ -448,15 +439,11 @@ const AddJob: React.FC = () => {
                   />
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="max" className="block text-xs text-gray-500">
-                    Maximum
-                  </label>
+                  <label className="block text-xs text-gray-500">Maximum</label>
                   <input
                     type="number"
-                    id="max"
-                    name="max"
-                    value={formData.salaryRange.max ?? ""}
-                    onChange={handleSalaryChange}
+                    value={form.salaryRange.max ?? ""}
+                    onChange={(e) => handleSalaryChange("max", e.target.value)}
                     className={inputCls}
                     placeholder="e.g., 100000"
                     min="0"
@@ -473,9 +460,13 @@ const AddJob: React.FC = () => {
               <input
                 type="number"
                 id="ctc"
-                name="ctc"
-                value={formData.ctc ?? ""}
-                onChange={handleCTCChange}
+                value={form.ctc ?? ""}
+                onChange={(e) =>
+                  set(
+                    "ctc",
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
+                }
                 className={inputCls}
                 placeholder="e.g., 1500000"
                 min="0"
@@ -496,12 +487,12 @@ const AddJob: React.FC = () => {
                 className="border border-gray-300 rounded-lg p-2 min-h-[46px] cursor-pointer focus-within:border-primary"
               >
                 <div className="flex flex-wrap gap-1">
-                  {formData.jobTypes.length === 0 ? (
+                  {form.jobTypes.length === 0 ? (
                     <span className="text-gray-400 text-sm">
                       Select job types...
                     </span>
                   ) : (
-                    formData.jobTypes.map((type) => {
+                    form.jobTypes.map((type) => {
                       const option = jobTypeOptions.find(
                         (opt) => opt.value === type,
                       );
@@ -528,11 +519,10 @@ const AddJob: React.FC = () => {
                 </div>
               </div>
 
-              {/* Dropdown options — only rendered when open */}
               {isJobTypeOpen && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {jobTypeOptions.map((option) => {
-                    const selected = formData.jobTypes.includes(option.value);
+                    const selected = form.jobTypes.includes(option.value);
                     return (
                       <div
                         key={option.value}
@@ -555,13 +545,20 @@ const AddJob: React.FC = () => {
           </div>
 
           {/* ── Submit ── */}
-          <div className="flex justify-end pb-10">
+          <div className="flex justify-end pb-10 gap-4">
+            <button
+              type="button"
+              onClick={() => navigate("/my-jobs")}
+              className="px-4 py-1.5 md:px-8 md:py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-full hover:border-primary hover:text-primary transition cursor-pointer text-base"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-10 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
+              className="px-4 py-1.5 md:px-10 md:py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary-dull transition disabled:opacity-60 cursor-pointer text-base"
             >
-              {submitting ? "Posting..." : "Post Job"}
+              {submitting ? "Updating..." : "Update Job"}
             </button>
           </div>
         </form>
@@ -570,4 +567,4 @@ const AddJob: React.FC = () => {
   );
 };
 
-export default AddJob;
+export default EditJob;

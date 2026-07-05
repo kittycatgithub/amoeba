@@ -1,6 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import filterReducer from "./slices/filterSlice";
 import propertyReducer from './slices/propertySlice';
+import jobReducer from "./slices/jobSlice";
+import filterJobReducer from "./slices/filterJobSlice";
 import wishlistReducer from './slices/wishlistSlice';
 import shortlistReducer from "./slices/shortlistSlice";
 import userReducer from "./slices/userSlice";
@@ -11,6 +13,8 @@ const store = configureStore({
     reducer: {
         filters: filterReducer,
         property: propertyReducer,
+        job: jobReducer,
+        jobFilters: filterJobReducer,
         wishlist:  wishlistReducer,
         shortlist: shortlistReducer,
         user: userReducer,

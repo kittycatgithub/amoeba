@@ -27,6 +27,10 @@ import AdminAddProperty from "./pages/admin/AdminAddProperty"
 import PropertiesList from "./pages/admin/PropertiesList"
 import Users from "./pages/admin/Users"
 import AdminDashboard from "./pages/admin/AdminDashboard"
+import AddJob from "./pages/AddJob"
+import MyJobs from "./pages/MyJobs"
+import EditJob from "./pages/EditJob"
+import JobSearchPage from "./pages/JobSearchPage"
 
 const App = () => {
 
@@ -60,6 +64,12 @@ const App = () => {
         <Route path='/my-properties' element={<MyProperties/>}/>
         <Route path="/property-search" element={<SearchPage />} />
         <Route path="/property-details/:id" element={<PropertyDetails />} />
+
+        {/* Job Routes */}
+        <Route path="/add-job" element={<AddJob />}/>
+        <Route path='/my-jobs' element={<MyJobs/>}/>
+        <Route path="/edit-job/:id" element={<EditJob />} />
+        <Route path="/job-search" element={<JobSearchPage />} />
 
         {/* Policy Pages */}
         <Route path="/terms-conditions" element={<TermsAndConditions />}/>

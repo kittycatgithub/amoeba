@@ -18,6 +18,7 @@ const __dirname = dirname(__filename);
 // Route imports
 import authRoutes from './routes/auth.js';
 import propertyRoutes from './routes/property.js';
+import jobRoutes from './routes/job.js';
 import wishlistRoutes from './routes/wishlist.js';
 import contactRoutes from './routes/contact.js';
 import feedbackRoutes from './routes/feedback.js';
@@ -50,6 +51,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ─── Routes ─────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
+app.use('/api/jobs', jobRoutes);
 app.use('/api/users/wishlist', wishlistRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/feedback', feedbackRoutes);

@@ -4,6 +4,7 @@ import { RiMenu3Fill } from "react-icons/ri";
 import { Link, NavLink } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
+import { FiChevronDown } from "react-icons/fi";
 import {
   FiHeart,
   FiHome,
@@ -19,10 +20,14 @@ import { BsClockFill } from "react-icons/bs";
 import { useAppSelector } from "../store/hooks";
 
 const Navbar = () => {
-  const { user, userProfile, logout, setShowUserLogin, navigate } = useAppContext();
+  const { user, userProfile, logout, setShowUserLogin, navigate } =
+    useAppContext();
   const [isOpen, setIsOpen] = useState(false);
+  const [isJobMenuOpen, setIsJobMenuOpen] = useState(false); // desktop dropdown
+  const [isMobileJobOpen, setIsMobileJobOpen] = useState(false); // mobile accordion
+  const jobMenuRef = useRef<HTMLDivElement>(null);
 
-  const wishlisted = useAppSelector(state => state.wishlist.ids ?? []); // ✅ direct from slice
+  const wishlisted = useAppSelector((state) => state.wishlist.ids ?? []); // ✅ direct from slice
 
   const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +45,19 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // logout is provided by AppContext (dispatches Redux logout action)
+  useEffect(() => {
+    const handleJobMenuOutside = (event: MouseEvent) => {
+      if (
+        jobMenuRef.current &&
+        !jobMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsJobMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleJobMenuOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleJobMenuOutside);
+  }, []);
 
   return (
     <div>
@@ -72,7 +89,7 @@ const Navbar = () => {
       {/* <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all"> */}
       <nav className="flex items-center justify-between px-3 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all">
         <NavLink to={"/"}>
-         <img src="/website/mainlogo.png" className="h-12 md:h-16"/>
+          <img src="/website/mainlogo.png" className="h-12 md:h-16" />
         </NavLink>
 
         {/* Desktop Menu */}
@@ -80,6 +97,49 @@ const Navbar = () => {
           <NavLink to={"/"}>Home</NavLink>
           <NavLink to={"/property-search"}>Properties</NavLink>
           <NavLink to={"/my-properties"}>My Properties</NavLink>
+          {user ? (
+            <div className="relative" ref={jobMenuRef}>
+              <button
+                onClick={() => setIsJobMenuOpen((prev) => !prev)}
+                className="flex items-center gap-1 cursor-pointer"
+              >
+                Jobs
+                <FiChevronDown
+                  className={`text-base transition-transform duration-200 ${
+                    isJobMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isJobMenuOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 text-base">
+                  <NavLink
+                    to="/job-search"
+                    onClick={() => setIsJobMenuOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100 transition"
+                  >
+                    Explore Jobs
+                  </NavLink>
+                  <NavLink
+                    to="/add-job"
+                    onClick={() => setIsJobMenuOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100 transition"
+                  >
+                    Add Job
+                  </NavLink>
+                  <NavLink
+                    to="/my-jobs"
+                    onClick={() => setIsJobMenuOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100 transition"
+                  >
+                    My Jobs
+                  </NavLink>
+                </div>
+              )}
+            </div>
+          ) : (
+            <NavLink to="/job-search">Jobs</NavLink>
+          )}
           <NavLink to={"/contact"}>Contact</NavLink>
 
           {/* <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full">
@@ -98,7 +158,7 @@ const Navbar = () => {
                     <button className="absolute -top-2 -right-3 text-xs text-white bg-primary w-[18px] h-[18px] rounded-full">3</button>
                 </div> */}
           {/* <button className="group relative cursor-pointer overflow-hidden whitespace-nowrap p-3 text-white bg-green-600 rounded-full transition-all duration-300 hover:scale-108 flex justify-center" style={{ "--spread": "90deg", "--shimmer-color": "#ffffff", "--radius": "100px", "--speed": "2s", "--cut": "0.1em" } as React.CSSProperties}><div className="absolute inset-0 overflow-hidden"><div className="absolute inset-[-100%] animate-[spin_var(--speed)_linear_infinite]"><div className="absolute inset-0 [background:conic-gradient(from_calc(270deg-(var(--spread)*0.5)),transparent_0,hsl(0_0%_100%/1)_var(--spread),transparent_var(--spread))]"></div></div></div><div className="absolute bg-green-600 rounded-full [inset:var(--cut)]"></div><span className="z-10 whitespace-pre bg-gradient-to-b from-black from-30% to-gray-300/80 bg-clip-text text-center text-sm font-semibold leading-none tracking-tight text-white">Post Property Free</span></button> */}
-          
+
           <NavLink to="/wishlist" className="relative cursor-pointer">
             <IoHeartOutline className="text-2xl text-themered-dull" />
             <button className="absolute -top-2 -right-2 text-xs text-white bg-themered-dull w-[18px] h-[18px] rounded-full">
@@ -159,7 +219,7 @@ const Navbar = () => {
                     alt="profile"
                     className="h-8 w-8 rounded-full"
                   />
-                  <p>{userProfile?.role}</p>
+                  {/* <p>{userProfile?.role}</p> */}
                 </div>
               </div>
             )}
@@ -201,7 +261,7 @@ const Navbar = () => {
         {/* DRAWER */}
         <div
           ref={drawerRef}
-          className={`fixed top-0 right-0 h-full w-[85%] sm:w-[400px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ${
+          className={`fixed top-0 right-0 h-full overflow-y-auto w-[85%] sm:w-[400px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ${
             isOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
@@ -210,8 +270,8 @@ const Navbar = () => {
             <h2 className="text-xl">
               {user ? (userProfile?.name ?? "My Account") : "Welcome"}
             </h2>
-            <button onClick={()=> setIsOpen(false)}>
-              <MdClose className="text-2xl"/>
+            <button onClick={() => setIsOpen(false)}>
+              <MdClose className="text-2xl" />
             </button>
           </div>
 
@@ -251,7 +311,7 @@ const Navbar = () => {
                   </span>
                   <span className="font-medium">My Properties</span>
                 </NavLink>
-                
+
                 <NavLink
                   to="/wishlist"
                   onClick={() => setIsOpen(false)}
@@ -317,6 +377,58 @@ const Navbar = () => {
                   </span>
                   <span className="font-medium">Feedback</span>
                 </NavLink>
+                {/* ── Jobs accordion — now above Logout ── */}
+                <div>
+                  <button
+                    onClick={() => setIsMobileJobOpen((prev) => !prev)}
+                    className="flex items-center gap-3 px-3 py-2 w-full hover:bg-gray-100 cursor-pointer transition"
+                  >
+                    <span className="text-lg">
+                      <MdOutlineFeaturedPlayList />
+                    </span>
+                    <span className="font-medium">Jobs</span>
+                    <FiChevronDown
+                      className={`ml-auto transition-transform duration-200 ${
+                        isMobileJobOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isMobileJobOpen && (
+                    <div className="flex flex-col pl-10">
+                      <NavLink
+                        to="/job-search"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsMobileJobOpen(false);
+                        }}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer transition text-sm"
+                      >
+                        Explore Jobs
+                      </NavLink>
+                      <NavLink
+                        to="/add-job"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsMobileJobOpen(false);
+                        }}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer transition text-sm"
+                      >
+                        Add Job
+                      </NavLink>
+                      <NavLink
+                        to="/my-jobs"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsMobileJobOpen(false);
+                        }}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer transition text-sm"
+                      >
+                        My Jobs
+                      </NavLink>
+                    </div>
+                  )}
+                </div>
                 <button
                   className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary transition text-white rounded-full"
                   onClick={logout}
@@ -328,6 +440,28 @@ const Navbar = () => {
 
             {!user && (
               <ul className="space-y-4 ">
+                <NavLink
+                  to="/property-search"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 cursor-pointer transition"
+                >
+                  <span className="text-lg">
+                    {/* <FiPlusCircle /> */}
+                    <MdOutlineFeaturedPlayList />
+                  </span>
+                  <span className="font-medium">Explore Properties</span>
+                </NavLink>
+                {/* logged-out mobile Jobs link stays standalone, outside the user fragment */}
+                <NavLink
+                  to="/job-search"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-3 hover:bg-gray-100 cursor-pointer transition"
+                >
+                  <span className="text-lg">
+                    <MdOutlineFeaturedPlayList />
+                  </span>
+                  <span className="font-medium">Explore Jobs</span>
+                </NavLink>
                 <NavLink
                   to="/"
                   onClick={() => setIsOpen(false)}

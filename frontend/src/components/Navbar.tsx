@@ -186,7 +186,6 @@ const Navbar = () => {
 
           {/* hamburger (always shown alongside the profile on smaller screens) */}
           <button onClick={() => setIsOpen(true)} aria-label="Menu">
-            {/* <MdMenu className="text-4xl" /> */}
             <RiMenu3Fill className="text-3xl" />
           </button>
         </div>
@@ -221,6 +220,17 @@ const Navbar = () => {
             {user && (
               <>
                 <NavLink
+                  to="/property-search"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 cursor-pointer transition"
+                >
+                  <span className="text-lg">
+                    {/* <FiPlusCircle /> */}
+                    <MdOutlineFeaturedPlayList />
+                  </span>
+                  <span className="font-medium">Explore Properties</span>
+                </NavLink>
+                <NavLink
                   to="/add-property"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 cursor-pointer transition"
@@ -241,6 +251,7 @@ const Navbar = () => {
                   </span>
                   <span className="font-medium">My Properties</span>
                 </NavLink>
+                
                 <NavLink
                   to="/wishlist"
                   onClick={() => setIsOpen(false)}

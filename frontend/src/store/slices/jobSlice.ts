@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../api/axios';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api/jobs`;
 
@@ -53,7 +53,7 @@ export const fetchJobs = createAsyncThunk(
   'job/fetchAll',
   async (filters: JobFilters | undefined = {}, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE}`, { params: filters });
+      const { data } = await api.get(`${API_BASE}`, { params: filters });
       return data; // { jobs, total, page, pages }
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message ?? 'Failed to fetch jobs');
@@ -66,7 +66,7 @@ export const fetchJobById = createAsyncThunk(
   'job/fetchById',
   async (id: string, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE}/${id}`);
+      const { data } = await api.get(`${API_BASE}/${id}`);
       return data.job as Job;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message ?? 'Failed to fetch job');
@@ -79,7 +79,7 @@ export const fetchMyJobs = createAsyncThunk(
   'job/fetchMine',
   async (_: void, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE}/mine`);
+      const { data } = await api.get(`${API_BASE}/user/my-jobs`);
       return data.jobs as Job[];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message ?? 'Failed to fetch your jobs');
@@ -92,7 +92,7 @@ export const createJob = createAsyncThunk(
   'job/create',
   async (payload: Partial<JobPayload>, { rejectWithValue }) => {
     try {
-      const { data } = await axios.post(`${API_BASE}`, payload);
+      const { data } = await api.post(`${API_BASE}`, payload);
       return data.job as Job;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message ?? 'Failed to create job');
@@ -108,7 +108,7 @@ export const updateJob = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const { data } = await axios.put(`${API_BASE}/${id}`, payload);
+      const { data } = await api.put(`${API_BASE}/${id}`, payload);
       return data.job as Job;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message ?? 'Failed to update job');
@@ -121,7 +121,7 @@ export const deleteJob = createAsyncThunk(
   'job/delete',
   async (id: string, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_BASE}/${id}`);
+      await api.delete(`${API_BASE}/${id}`);
       return id;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message ?? 'Failed to delete job');

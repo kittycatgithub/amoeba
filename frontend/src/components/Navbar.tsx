@@ -195,6 +195,36 @@ const Navbar = () => {
               Post Property Free
             </span>
           </button>
+          <button
+            onClick={() => {
+              if (user) {
+                navigate("/add-job");
+              } else {
+                setShowUserLogin(true);
+              }
+            }}
+            // className="group relative cursor-pointer overflow-hidden whitespace-nowrap p-3 text-white bg-primary-dull rounded-full transition-all duration-300 hover:scale-108 flex justify-center"
+            className="group relative cursor-pointer overflow-hidden whitespace-nowrap p-2 text-white bg-primary rounded-full transition-all duration-300 hover:scale-108 flex justify-center"
+            style={
+              {
+                "--spread": "90deg",
+                "--shimmer-color": "#ffffff",
+                "--radius": "100px",
+                "--speed": "2s",
+                "--cut": "0.1em",
+              } as React.CSSProperties
+            }
+          >
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute inset-[-100%] animate-[spin_var(--speed)_linear_infinite]">
+                <div className="absolute inset-0 [background:conic-gradient(from_calc(270deg-(var(--spread)*0.5)),transparent_0,hsl(0_0%_100%/1)_var(--spread),transparent_var(--spread))]"></div>
+              </div>
+            </div>
+            <div className="absolute bg-primary rounded-full [inset:var(--cut)]"></div>
+            <span className="z-10 whitespace-pre bg-gradient-to-b from-black from-30% to-gray-300/80 bg-clip-text text-center text-base leading-none tracking-tight text-white">
+              Post Job Free
+            </span>
+          </button>
           <div className="relative">
             {/* USER BUTTON / PROFILE */}
             {!user ? (
@@ -279,6 +309,58 @@ const Navbar = () => {
           <div className="flex flex-col p-4 gap-1 text-gray-700">
             {user && (
               <>
+               {/* ── Jobs accordion — now above Logout ── */}
+                <div>
+                  <button
+                    onClick={() => setIsMobileJobOpen((prev) => !prev)}
+                    className="flex items-center gap-3 px-3 py-2 w-full hover:bg-gray-100 cursor-pointer transition"
+                  >
+                    <span className="text-lg">
+                      <MdOutlineFeaturedPlayList />
+                    </span>
+                    <span className="font-medium">Jobs</span>
+                    <FiChevronDown
+                      className={`ml-auto transition-transform duration-200 ${
+                        isMobileJobOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isMobileJobOpen && (
+                    <div className="flex flex-col pl-10">
+                      <NavLink
+                        to="/job-search"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsMobileJobOpen(false);
+                        }}
+                        className="px-3 py-1 font-medium hover:bg-gray-100 cursor-pointer transition"
+                      >
+                        Explore Jobs
+                      </NavLink>
+                      <NavLink
+                        to="/add-job"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsMobileJobOpen(false);
+                        }}
+                        className="px-3 py-1 font-medium hover:bg-gray-100 cursor-pointer transition"
+                      >
+                        Add Job
+                      </NavLink>
+                      <NavLink
+                        to="/my-jobs"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsMobileJobOpen(false);
+                        }}
+                        className="px-3 py-1 font-medium hover:bg-gray-100 cursor-pointer transition"
+                      >
+                        My Jobs
+                      </NavLink>
+                    </div>
+                  )}
+                </div>
                 <NavLink
                   to="/property-search"
                   onClick={() => setIsOpen(false)}
@@ -376,59 +458,7 @@ const Navbar = () => {
                     <FiStar />
                   </span>
                   <span className="font-medium">Feedback</span>
-                </NavLink>
-                {/* ── Jobs accordion — now above Logout ── */}
-                <div>
-                  <button
-                    onClick={() => setIsMobileJobOpen((prev) => !prev)}
-                    className="flex items-center gap-3 px-3 py-2 w-full hover:bg-gray-100 cursor-pointer transition"
-                  >
-                    <span className="text-lg">
-                      <MdOutlineFeaturedPlayList />
-                    </span>
-                    <span className="font-medium">Jobs</span>
-                    <FiChevronDown
-                      className={`ml-auto transition-transform duration-200 ${
-                        isMobileJobOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {isMobileJobOpen && (
-                    <div className="flex flex-col pl-10">
-                      <NavLink
-                        to="/job-search"
-                        onClick={() => {
-                          setIsOpen(false);
-                          setIsMobileJobOpen(false);
-                        }}
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer transition text-sm"
-                      >
-                        Explore Jobs
-                      </NavLink>
-                      <NavLink
-                        to="/add-job"
-                        onClick={() => {
-                          setIsOpen(false);
-                          setIsMobileJobOpen(false);
-                        }}
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer transition text-sm"
-                      >
-                        Add Job
-                      </NavLink>
-                      <NavLink
-                        to="/my-jobs"
-                        onClick={() => {
-                          setIsOpen(false);
-                          setIsMobileJobOpen(false);
-                        }}
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer transition text-sm"
-                      >
-                        My Jobs
-                      </NavLink>
-                    </div>
-                  )}
-                </div>
+                </NavLink>               
                 <button
                   className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary transition text-white rounded-full"
                   onClick={logout}

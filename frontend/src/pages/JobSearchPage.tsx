@@ -6,7 +6,7 @@ import { BsFilterRight } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 import { FaSearch, FaBriefcase } from "react-icons/fa";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { type JobFilters } from "../api/jobApi";
+import { type JobFilters } from "../store/slices/jobSlice";
 import { fetchJobs } from "../store/slices/jobSlice";
 import JobSidebar from "../components/job/JobSidebar";
 import { resetJobFilters, setJobFilters, setSearchQuery } from "../store/slices/filterJobSlice";
@@ -29,9 +29,9 @@ const JobSearchPage = () => {
     search: f.searchQuery || undefined,
     minCtc: f.minCtc || undefined,
     maxCtc: f.maxCtc || undefined,
-    location: f.location.length ? f.location : undefined,
-    jobTypes: f.jobTypes.length ? f.jobTypes : undefined,
-    skills: f.skills.length ? f.skills : undefined,
+    location: f.location.length ? f.location.join(",") : undefined,
+    jobTypes: f.jobTypes.length ? f.jobTypes.join(",") : undefined,
+    skills: f.skills.length ? f.skills.join(",") : undefined,
   });
 
   // ── On mount: hydrate Redux from URL params then fetch ─────────────────────

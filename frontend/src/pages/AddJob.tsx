@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
-import { createJobApi } from "../api/jobApi";
 import JoditEditor from "jodit-react";
+import { useAppDispatch } from "../store/hooks";
+import { createJob } from "../store/slices/jobSlice";
 
 // Types
 interface JobFormData {
@@ -32,6 +33,7 @@ interface JobTypeOption {
 const AddJob: React.FC = () => {
   const navigate = useNavigate();
   const { user, setShowUserLogin } = useAppContext();
+  const dispatch = useAppDispatch();
 
   // Form state
   const [formData, setFormData] = useState<JobFormData>({
@@ -226,7 +228,7 @@ const AddJob: React.FC = () => {
         ...formData,
         skills: cleanSkills,
       };
-      await createJobApi(payload);
+      await dispatch(createJob(payload)).unwrap();
       toast.success("Job posted successfully!");
       navigate("/my-jobs");
     } catch (err: any) {

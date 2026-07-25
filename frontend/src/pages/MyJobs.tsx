@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import { getMyJobsApi, deleteJobApi } from "../api/jobApi";
 import { toast } from "react-hot-toast";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { deleteJob, fetchMyJobs } from "../store/slices/jobSlice";
 
 const currency = "₹";
 
@@ -26,8 +27,9 @@ const EditJobButton = ({ jobId }: { jobId: string }) => (
 const MyJobs = () => {
   const { user } = useAppContext();
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const jobs = useAppSelector((state) => state.job.myJobs);
+  const loading = useAppSelector((state) => state.job.myJobsLoading);
 
   // Fetch user's jobs on mount
   useEffect(() => {
@@ -35,28 +37,14 @@ const MyJobs = () => {
       navigate("/");
       return;
     }
-
-    const fetchUserJobs = async () => {
-      try {
-        const { data } = await getMyJobsApi();
-        setJobs(data.jobs || []);
-      } catch (error) {
-        console.error("Failed to fetch jobs:", error);
-        toast.error("Failed to load your jobs");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserJobs();
-  }, [user, navigate]);
+    dispatch(fetchMyJobs());
+  }, [user, navigate, dispatch]);
 
   // Delete job handler
   const handleDeleteJob = async (jobId: string) => {
     if (window.confirm("Are you sure you want to delete this job?")) {
       try {
-        await deleteJobApi(jobId);
-        setJobs((prev) => prev.filter((j) => j._id !== jobId));
+        await dispatch(deleteJob(jobId)).unwrap();
         toast.success("Job deleted successfully");
       } catch (error) {
         console.error("Failed to delete job:", error);

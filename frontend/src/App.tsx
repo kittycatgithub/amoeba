@@ -31,6 +31,7 @@ import AddJob from "./pages/AddJob"
 import MyJobs from "./pages/MyJobs"
 import EditJob from "./pages/EditJob"
 import JobSearchPage from "./pages/JobSearchPage"
+import JobDetails from "./pages/job/JobDetails"
 
 const App = () => {
 
@@ -67,6 +68,7 @@ const App = () => {
 
         {/* Job Routes */}
         <Route path="/add-job" element={<AddJob />}/>
+        <Route path='/job-details/:id' element={<JobDetails/>}/>
         <Route path='/my-jobs' element={<MyJobs/>}/>
         <Route path="/edit-job/:id" element={<EditJob />} />
         <Route path="/job-search" element={<JobSearchPage />} />

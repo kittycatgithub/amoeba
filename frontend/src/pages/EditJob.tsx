@@ -3,9 +3,10 @@ import { INDIAN_STATES, STATE_CITIES } from "../assets/assets";
 import { toast } from "react-hot-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import { getJobApi, updateJobApi } from "../api/jobApi";
 import { motion } from "framer-motion";
 import JoditEditor from "jodit-react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { clearCurrentJob, fetchJobById, updateJob } from "../store/slices/jobSlice";
 
 interface JobTypeOption {
   value: string;
@@ -49,6 +50,8 @@ const EditJob = () => {
   const { id } = useParams<{ id: string }>();
   const { user, setShowUserLogin } = useAppContext();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const currentJob = useAppSelector((state) => state.job.currentJob);
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [submitting, setSubmitting] = useState(false);
@@ -70,40 +73,36 @@ const EditJob = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch job data on mount
   useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        const { data } = await getJobApi(id!);
-        const job = data.job;
-
-        setForm({
-          title: job.title || "",
-          description: job.description || "",
-          skills: job.skills && job.skills.length > 0 ? job.skills : [""],
-          status: job.status || "open",
-          location: job.location || "remote",
-          workLocation: {
-            city: job.workLocation?.city || "",
-            state: job.workLocation?.state || "",
-          },
-          salaryRange: {
-            min: job.salaryRange?.min ?? null,
-            max: job.salaryRange?.max ?? null,
-          },
-          ctc: job.ctc ?? null,
-          jobTypes: job.jobTypes || [],
-        });
-        setLoading(false);
-      } catch (error) {
-        console.error("Failed to fetch job:", error);
-        toast.error("Failed to load job");
-        navigate("/my-jobs");
-      }
+    if (!id) return;
+    dispatch(fetchJobById(id));
+    return () => {
+      dispatch(clearCurrentJob());
     };
+  }, [id, dispatch]);
 
-    if (id) fetchJob();
-  }, [id, navigate]);
+  // separate effect: once currentJob arrives, hydrate the form
+  useEffect(() => {
+    if (!currentJob) return;
+    setForm({
+      title: currentJob.title || "",
+      description: currentJob.description || "",
+      skills: currentJob.skills?.length > 0 ? currentJob.skills : [""],
+      status: currentJob.status || "open",
+      location: currentJob.location || "remote",
+      workLocation: {
+        city: currentJob.workLocation?.city || "",
+        state: currentJob.workLocation?.state || "",
+      },
+      salaryRange: {
+        min: currentJob.salaryRange?.min ?? null,
+        max: currentJob.salaryRange?.max ?? null,
+      },
+      ctc: currentJob.ctc ?? null,
+      jobTypes: currentJob.jobTypes || [],
+    });
+    setLoading(false);
+  }, [currentJob]);
 
   // Jodit config — memoized so the editor doesn't re-init on every render
   const editorConfig = useMemo(
@@ -199,7 +198,7 @@ const EditJob = () => {
     setSubmitting(true);
     try {
       const payload = { ...form, skills: cleanSkills };
-      await updateJobApi(id!, payload);
+      await dispatch(updateJob({ id: id!, payload })).unwrap();
       toast.success("Job updated successfully!");
       navigate("/my-jobs");
     } catch (err: any) {

@@ -83,6 +83,7 @@ const HeaderCarousel = () => {
                 >
                   Explore Properties
                 </NavLink>
+                
                 <NavLink to="/contact" onClick={()=> scrollTo(0,0)}
                   className="bg-primary hover:bg-primary-dull animate-pulse text-white font-semibold py-3 px-4 md:px-8 rounded-full transition-transform transform hover:scale-105"
                 >

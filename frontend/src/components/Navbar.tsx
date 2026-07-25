@@ -15,9 +15,8 @@ import {
   FiUser,
 } from "react-icons/fi";
 import { MdClose, MdEmail, MdOutlineFeaturedPlayList } from "react-icons/md";
-import { FaPhoneAlt } from "react-icons/fa";
-import { BsClockFill } from "react-icons/bs";
 import { useAppSelector } from "../store/hooks";
+import { PiPhoneCallLight } from "react-icons/pi";
 
 const Navbar = () => {
   const { user, userProfile, logout, setShowUserLogin, navigate } =
@@ -70,16 +69,21 @@ const Navbar = () => {
             <MdEmail className="text-white" />
             hostcloudrcs@gmail.com
           </Link>
-          <Link to="tel:+918956127940" className="flex items-center gap-1">
+          {/* <Link to="tel:+918956127940" className="flex items-center gap-1">
             | <FaPhoneAlt className="text-white" />
             +91 8421946550
-          </Link>
+          </Link> */}
         </div>
         <div>
-          <div className="flex items-center gap-1">
-            <BsClockFill className="text-white h-3.5" />
-            Support Open Everyday - 10AM - 7PM
-          </div>
+          <a
+            href="https://wa.me/918421946550"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1"
+          >
+            <PiPhoneCallLight className="text-white text-lg" />
+            <span>Talk to Real Estate Advisor</span>
+          </a>
           {/* <Link to={""} className="flex items-center gap-1">
                         <BsClockFill className="text-white h-3.5" />
               

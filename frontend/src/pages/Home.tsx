@@ -1,4 +1,5 @@
 import HeaderCarousel from '../components/HeaderCarousel'
+import JobSection from '../components/job/JobSection'
 // import NewsLetter from '../components/NewsLetter'
 import RealEstateSearchAdvanced from '../components/RealEstateSearchAdvanced'
 
@@ -7,6 +8,7 @@ const Home = () => {
     <div className='z-0'>
         <HeaderCarousel/>
         <RealEstateSearchAdvanced/>
+        <JobSection/>
         {/* <Services/> */}
         {/* <ServicesSection/> */}
         {/* <NewsLetter /> */}
